@@ -6,10 +6,11 @@ intents = discord.Intents.all()
 
 client = commands.Bot(command_prefix=';', help_command=None, intents=intents)
 
-with open('homework_tasks', 'r') as f:
+with open('subject', 'r') as f:
     subject = ast.literal_eval(f.read())
 
 
+# TODO: COG AND ORGANIZATION
 def get_real_subject(subject_name):
     for i in subject:
         if i.lower() == subject_name.lower():
@@ -50,7 +51,7 @@ def remove_subject(subject_name):
 
 
 def save_all():
-    with open('homework_tasks', 'w') as file:
+    with open('subject', 'w') as file:
         file.write(repr(subject))
 
 
@@ -64,6 +65,7 @@ async def on_member_join(member):
     print(f'{member} just joined')
 
 
+# TODO: EXPAND HELP COMMAND
 @client.hybrid_command(brief='List of commands')
 async def help(ctx):
     embed = discord.Embed(color=0x255FAB, title='bigfatstudier Bot Commands',
@@ -74,6 +76,7 @@ async def help(ctx):
     await client.tree.sync()
 
 
+# TODO: ALIAS, MULTIPLE HOMEWORK ASSIGNMENTS
 @client.hybrid_command(brief='List of subjects')
 async def subjects(ctx, options=None, *, subject_name=None):
     if options is None:
@@ -108,7 +111,7 @@ async def subjects(ctx, options=None, *, subject_name=None):
                 remove_subject(real_subject)
                 await ctx.send(f'The subject {real_subject} has been successfully removed')
             except KeyError:
-                await ctx.send('That subject never existed!')
+                await ctx.send(f'There is no such subject as {subject_name}!')
     else:
         await ctx.send('Invalid arguments!')
     await client.tree.sync()
@@ -136,21 +139,19 @@ async def homework(ctx, *, subject_name=None):
 async def set_homework(ctx, *, subject_name=None, clear=None):
     if subject_name is None:
         await ctx.send('You need to specify a subject to set the homework to!')
-    try:
-        real_subject = get_real_subject(subject_name)
-    except KeyError:
-        await ctx.send('That is not a valid subject!')
     if clear is not None:
         if clear.lower() == "clear":
             try:
+                real_subject = get_real_subject(subject_name)
                 set_subject_homework(real_subject, 'None')
                 await ctx.send(f'Successfully cleared the homework of {real_subject}')
             except KeyError:
-                await ctx.send('That is not a valid subject!')
+                await ctx.send(f'There is no such subject as {subject_name}!')
         else:
             await ctx.send('Invalid clear argument!')
     else:
         try:
+            real_subject = get_real_subject(subject_name)
             await ctx.send('What homework does that subject have?')
 
             def check(m):
@@ -163,6 +164,8 @@ async def set_homework(ctx, *, subject_name=None, clear=None):
             else:
                 set_subject_homework(real_subject, msg.content)
                 await ctx.send(f'Successfully set the homework of {real_subject} to {msg.content}')
+        except KeyError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
         except TimeoutError:
             await ctx.send('Homework timeout')
     await client.tree.sync()
