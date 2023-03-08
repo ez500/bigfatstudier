@@ -1,4 +1,6 @@
 import ast
+import asyncio.exceptions
+
 import discord
 from discord.ext import commands
 
@@ -235,8 +237,8 @@ async def set_homework(ctx, *, subject_name=None, clear=None):
                     await ctx.send(f'Successfully set the homework of {real_subject} to {msg.content}')
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
-            except TimeoutError:
-                await ctx.send('Homework timeout')
+            except asyncio.exceptions.TimeoutError:
+                await ctx.send('Timeout! You didn\'t specify homework to set in time')
     await client.tree.sync()
 
 
