@@ -2,18 +2,20 @@ import ast
 import asyncio.exceptions
 
 import discord
+from discord import Intents
 from discord.ext import commands
+from discord.ext.commands import Bot
 
-intents = discord.Intents.all()
+intents: Intents = discord.Intents.all()
 
-client = commands.Bot(command_prefix=';', help_command=None, intents=intents)
+client: Bot = commands.Bot(command_prefix=';', help_command=None, intents=intents)
 
 with open('subject', 'r') as f:
     subject = ast.literal_eval(f.read())
 
 
 # TODO: COG AND ORGANIZATION
-def get_real_subject(subject_name):
+def get_real_subject(subject_name: str) -> str:
     subject_name = ' '.join(subject_name.split())
     for i in subject:
         if i.lower() == subject_name.lower():
@@ -21,7 +23,7 @@ def get_real_subject(subject_name):
     raise KeyError('This subject doesn\'t exist!')
 
 
-def get_subject_homework(subject_name):
+def get_subject_homework(subject_name: str) -> str:
     subject_name = ' '.join(subject_name.split())
     for i in subject:
         if i.lower() == subject_name.lower():
@@ -29,7 +31,7 @@ def get_subject_homework(subject_name):
     raise KeyError('This subject doesn\'t exist!')
 
 
-def set_subject_homework(subject_name, assignment):
+def set_subject_homework(subject_name: str, assignment: str) -> None:
     subject_name = ' '.join(subject_name.split())
     for i in subject:
         if i.lower() == subject_name.lower():
@@ -38,7 +40,7 @@ def set_subject_homework(subject_name, assignment):
     raise KeyError('This subject doesn\'t exist!')
 
 
-def add_subject(subject_name):
+def add_subject(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split())
     for i in subject:
         if i.lower() == subject_name.lower():
@@ -48,7 +50,7 @@ def add_subject(subject_name):
     subject[subject_name] = 'None'
 
 
-def remove_subject(subject_name):
+def remove_subject(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split())
     for i in subject:
         if i.lower() == subject_name.lower():
@@ -57,7 +59,7 @@ def remove_subject(subject_name):
     raise KeyError('This subject never existed!')
 
 
-def save_all():
+def save_all() -> None:
     with open('subject', 'w') as file:
         file.write(repr(subject))
 
