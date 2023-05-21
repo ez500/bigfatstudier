@@ -2,13 +2,11 @@ import ast
 import asyncio.exceptions
 
 import discord
-from discord import Intents
 from discord.ext import commands
-from discord.ext.commands import Bot
 
-intents: Intents = discord.Intents.all()
+intents = discord.Intents.all()
 
-client: Bot = commands.Bot(command_prefix=';', help_command=None, intents=intents)
+client = commands.Bot(command_prefix=';', help_command=None, intents=intents)
 
 with open('subject', 'r') as f:
     subject = ast.literal_eval(f.read())
@@ -71,6 +69,7 @@ async def on_ready():
 
 @client.event
 async def on_member_join(member):
+    await client.change_presence(status=discord.Status.do_not_disturb)
     print(f'{member} just joined')
 
 
@@ -205,12 +204,30 @@ async def set_homework(ctx, *, subject_name=None, clear=None):
         await ctx.send('You need to specify a subject to set the homework to!')
     elif clear is not None:
         if clear.lower() == 'clear':
-            try:
-                real_subject = get_real_subject(subject_name)
-                set_subject_homework(real_subject, 'None')
-                await ctx.send(f'Successfully cleared the homework of {real_subject}')
-            except KeyError:
-                await ctx.send(f'There is no such subject as {subject_name}!')
+            if subject_name.lower() == 'all':
+                if ctx.author.id == 434430979075997707:
+                    try:
+                        await ctx.send('Are you sure you want to clear the homework for all subjects?')
+                        msg = await client.wait_for('message',
+                                                    check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
+                                                    timeout=20.0)
+                        if msg.content.lower() == 'yes':
+                            for i in subject:
+                                set_subject_homework(i, 'None')
+                            await ctx.send('Cleared homework for all subjects')
+                        else:
+                            await ctx.send('Confirmation failed')
+                    except asyncio.exceptions.TimeoutError:
+                        await ctx.send('Timeout! Confirmation failed')
+                else:
+                    await ctx.send('Sorry, only certain users are able to clear all of the homework.')
+            else:
+                try:
+                    real_subject = get_real_subject(subject_name)
+                    set_subject_homework(real_subject, 'None')
+                    await ctx.send(f'Successfully cleared the homework of {real_subject}')
+                except KeyError:
+                    await ctx.send(f'There is no such subject as {subject_name}!')
         else:
             await ctx.send('Invalid clear argument!')
     else:
@@ -223,30 +240,32 @@ async def set_homework(ctx, *, subject_name=None, clear=None):
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
         else:
-            try:
-                real_subject = get_real_subject(subject_name)
-                await ctx.send('What homework does that subject have?')
-
-                def check(m):
-                    return m.channel == ctx.channel and m.author == ctx.author
-
-                msg = await client.wait_for('message', check=check, timeout=40.0)
-                if msg.content.lower() == 'clear':
-                    set_subject_homework(real_subject, 'None')
-                    await ctx.send(f'Successfully cleared the homework of {real_subject}')
-                else:
-                    set_subject_homework(real_subject, msg.content)
-                    await ctx.send(f'Successfully set the homework of {real_subject} to {msg.content}')
-            except KeyError:
-                await ctx.send(f'There is no such subject as {subject_name}!')
-            except asyncio.exceptions.TimeoutError:
-                await ctx.send('Timeout! You didn\'t specify homework to set in time')
+            if subject_name == 'all':
+                await ctx.send('You can\'t set a homework for all subjects.')
+            else:
+                try:
+                    real_subject = get_real_subject(subject_name)
+                    await ctx.send('What homework does that subject have?')
+                    msg = await client.wait_for('message',
+                                                check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
+                                                timeout=40.0)
+                    if msg.content.lower() == 'clear':
+                        set_subject_homework(real_subject, 'None')
+                        await ctx.send(f'Successfully cleared the homework of {real_subject}')
+                    else:
+                        set_subject_homework(real_subject, msg.content)
+                        await ctx.send(f'Successfully set the homework of {real_subject} to {msg.content}')
+                except KeyError:
+                    await ctx.send(f'There is no such subject as {subject_name}!')
+                except asyncio.exceptions.TimeoutError:
+                    await ctx.send('Timeout! No homework specified in time')
     await client.tree.sync()
 
 
 @set_homework.autocomplete('subject_name')
 async def help_autocomplete(interaction, current):
     options = [subject_name for subject_name in subject]
+    options.insert(0, 'all')
     return [discord.app_commands.Choice(name=option, value=option)
             for option in options if current.lower() in option.lower()]
 
@@ -270,7 +289,10 @@ async def stop(ctx):
         await client.tree.sync()
 
 
-with open('token', 'r') as f:
+async def main():
+    await client.start(token)
+
+with open('client.token', 'r') as f:
     token = f.read()
 save_all()
 client.run(token)

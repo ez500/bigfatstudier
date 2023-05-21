@@ -1,5 +1,5 @@
-# the token should stay hidden
-/token
+# the client.token should stay hidden
+/client.token
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
