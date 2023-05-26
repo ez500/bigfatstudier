@@ -1,53 +1,47 @@
-import ast
+"""Utilities"""
 
-with open('./data/subject', 'r') as f:
-    subject = ast.literal_eval(f.read())
+import data_config
 
 
 def get_real_subject(subject_name: str) -> str:
     subject_name = ' '.join(subject_name.split())
-    for i in subject:
+    for i in data_config.subject:
         if i.lower() == subject_name.lower():
             return i
-    raise KeyError('This subject doesn\'t exist!')
+    raise KeyError('This subject_data doesn\'t exist!')
 
 
 def get_subject_homework(subject_name: str) -> str:
     subject_name = ' '.join(subject_name.split())
-    for i in subject:
+    for i in data_config.subject:
         if i.lower() == subject_name.lower():
-            return subject[i]
-    raise KeyError('This subject doesn\'t exist!')
+            return data_config.subject[i]
+    raise KeyError('This subject_data doesn\'t exist!')
 
 
 def set_subject_homework(subject_name: str, assignment: str) -> None:
     subject_name = ' '.join(subject_name.split())
-    for i in subject:
+    for i in data_config.subject:
         if i.lower() == subject_name.lower():
-            subject[i] = assignment
+            data_config.subject[i] = assignment
             return
-    raise KeyError('This subject doesn\'t exist!')
+    raise KeyError('This subject_data doesn\'t exist!')
 
 
 def add_subject(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split())
-    for i in subject:
+    for i in data_config.subject:
         if i.lower() == subject_name.lower():
-            raise KeyError('This subject is already added!')
+            raise KeyError('This subject_data is already added!')
         elif subject_name.lower() == 'all':
-            raise NameError('You can\'t add an \'all\' subject!')
-    subject[subject_name] = 'None'
+            raise NameError('You can\'t add an \'all\' subject_data!')
+    data_config.subject[subject_name] = 'None'
 
 
 def remove_subject(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split())
-    for i in subject:
+    for i in data_config.subject:
         if i.lower() == subject_name.lower():
-            subject.pop(i)
+            data_config.subject.pop(i)
             return
-    raise KeyError('This subject never existed!')
-
-
-def save_all() -> None:
-    with open('data/subject', 'w') as file:
-        file.write(repr(subject))
+    raise KeyError('This subject_data never existed!')

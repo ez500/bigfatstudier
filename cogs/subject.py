@@ -1,12 +1,15 @@
+"""Subject commands"""
+
 import asyncio
 
 import discord
 from discord.ext import commands
 
-from data import subject, get_real_subject, get_subject_homework, set_subject_homework, add_subject, remove_subject
+from data_config import subject
+from util import get_real_subject, get_subject_homework, set_subject_homework, add_subject, remove_subject
 
 
-class Subjects(commands.Cog, name='subjects'):
+class Subject(commands.Cog, name='subject'):
     def __init__(self, client):
         self.client = client
 
@@ -25,26 +28,26 @@ class Subjects(commands.Cog, name='subjects'):
                 await ctx.send(subject_list)
         elif options.lower() == 'add':
             if subject_name is None:
-                await ctx.send('You need to specify what subject you want to add!')
+                await ctx.send('You need to specify what subject_data you want to add!')
             else:
                 try:
                     add_subject(subject_name)
-                    await ctx.send(f'Successfully added {subject_name} to the subject list!')
+                    await ctx.send(f'Successfully added {subject_name} to the subject_data list!')
                 except KeyError:
                     real_subject = get_real_subject(subject_name)
                     await ctx.send(f'{real_subject} already exists!')
                 except NameError:
-                    await ctx.send('You can\'t add an \'all\' subject!')
+                    await ctx.send('You can\'t add an \'all\' subject_data!')
         elif options.lower() == 'remove':
             if subject_name is None:
-                await ctx.send('You need to specify what subject you want to remove!')
+                await ctx.send('You need to specify what subject_data you want to remove!')
             else:
                 try:
                     real_subject = get_real_subject(subject_name)
                     remove_subject(real_subject)
-                    await ctx.send(f'The subject {real_subject} has been successfully removed')
+                    await ctx.send(f'The subject_data {real_subject} has been successfully removed')
                 except KeyError:
-                    await ctx.send(f'There is no such subject as {subject_name}!')
+                    await ctx.send(f'There is no such subject_data as {subject_name}!')
         else:
             await ctx.send('Invalid arguments!')
         await self.client.tree.sync()
@@ -65,7 +68,7 @@ class Subjects(commands.Cog, name='subjects'):
                              description='Know the homework that you have to do for each class')
     async def homework(self, ctx, *, subject_name=None):
         if subject_name is None:
-            await ctx.send('You need to specify what subject you want to check homework for!')
+            await ctx.send('You need to specify what subject_data you want to check homework for!')
         elif subject_name.lower() == 'all':
             message = 'Homework for all subjects:\n'
             for i in subject:
@@ -76,7 +79,7 @@ class Subjects(commands.Cog, name='subjects'):
             try:
                 await ctx.send(get_subject_homework(subject_name))
             except KeyError:
-                await ctx.send(f'There is no such subject as {subject_name}!')
+                await ctx.send(f'There is no such subject_data as {subject_name}!')
         await self.client.tree.sync()
 
     @homework.autocomplete('subject_name')
@@ -86,10 +89,10 @@ class Subjects(commands.Cog, name='subjects'):
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @commands.hybrid_command(brief='Set subject homework', description='Set homework for a subject')
+    @commands.hybrid_command(brief='Set subject_data homework', description='Set homework for a subject_data')
     async def set_homework(self, ctx, *, subject_name=None, clear=None):
         if subject_name is None:
-            await ctx.send('You need to specify a subject to set the homework to!')
+            await ctx.send('You need to specify a subject_data to set the homework to!')
         elif clear is not None:
             if clear.lower() == 'clear':
                 if subject_name.lower() == 'all':
@@ -116,7 +119,7 @@ class Subjects(commands.Cog, name='subjects'):
                         set_subject_homework(real_subject, 'None')
                         await ctx.send(f'Successfully cleared the homework of {real_subject}')
                     except KeyError:
-                        await ctx.send(f'There is no such subject as {subject_name}!')
+                        await ctx.send(f'There is no such subject_data as {subject_name}!')
             else:
                 await ctx.send('Invalid clear argument!')
         else:
@@ -127,14 +130,14 @@ class Subjects(commands.Cog, name='subjects'):
                     set_subject_homework(real_subject, 'None')
                     await ctx.send(f'Successfully cleared the homework of {real_subject}')
                 except KeyError:
-                    await ctx.send(f'There is no such subject as {subject_name}!')
+                    await ctx.send(f'There is no such subject_data as {subject_name}!')
             else:
                 if subject_name == 'all':
                     await ctx.send('You can\'t set a homework for all subjects.')
                 else:
                     try:
                         real_subject = get_real_subject(subject_name)
-                        await ctx.send('What homework does that subject have?')
+                        await ctx.send('What homework does that subject_data have?')
                         msg = await self.client.wait_for('message',
                                                          check=lambda m: m.channel == ctx.channel and
                                                                          m.author == ctx.author,
@@ -146,7 +149,7 @@ class Subjects(commands.Cog, name='subjects'):
                             set_subject_homework(real_subject, msg.content)
                             await ctx.send(f'Successfully set the homework of {real_subject} to {msg.content}')
                     except KeyError:
-                        await ctx.send(f'There is no such subject as {subject_name}!')
+                        await ctx.send(f'There is no such subject_data as {subject_name}!')
                     except asyncio.exceptions.TimeoutError:
                         await ctx.send('Timeout! No homework specified in time')
         await self.client.tree.sync()
@@ -166,4 +169,4 @@ class Subjects(commands.Cog, name='subjects'):
 
 
 async def setup(client):
-    await client.add_cog(Subjects(client))
+    await client.add_cog(Subject(client))
