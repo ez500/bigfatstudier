@@ -15,6 +15,7 @@ class Subject(commands.Cog, name='subject'):
 
     # TODO: SUBJECT ALIAS
     # TODO: MULTIPLE HOMEWORK ASSIGNMENTS
+    # TODO: Add specific description to subjects command (literals)
     @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
     async def subjects(self, ctx, options=None, *, subject_name=None):
         if options is None or options.lower() == 'list':
@@ -53,13 +54,13 @@ class Subject(commands.Cog, name='subject'):
         await self.client.tree.sync()
 
     @subjects.autocomplete('options')
-    async def help_autocomplete(self, interaction, current):
+    async def help_autocomplete(self, _interaction, current):
         options = ['list', 'add', 'remove']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
     @subjects.autocomplete('subject_name')
-    async def help_autocomplete(self, interaction, current):
+    async def help_autocomplete(self, _interaction, current):
         options = [subject_name for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -83,7 +84,7 @@ class Subject(commands.Cog, name='subject'):
         await self.client.tree.sync()
 
     @homework.autocomplete('subject_name')
-    async def help_autocomplete(self, interaction, current):
+    async def help_autocomplete(self, _interaction, current):
         options = [subject_name for subject_name in subject]
         options.insert(0, 'all')
         return [discord.app_commands.Choice(name=option, value=option)
@@ -101,7 +102,7 @@ class Subject(commands.Cog, name='subject'):
                             await ctx.send('Are you sure you want to clear the homework for all subjects?')
                             msg = await self.client.wait_for('message',
                                                              check=lambda m: m.channel == ctx.channel and
-                                                                             m.author == ctx.author,
+                                                             m.author == ctx.author,
                                                              timeout=20.0)
                             if msg.content.lower() == 'yes':
                                 for i in subject:
@@ -140,7 +141,7 @@ class Subject(commands.Cog, name='subject'):
                         await ctx.send('What homework does that subject_data have?')
                         msg = await self.client.wait_for('message',
                                                          check=lambda m: m.channel == ctx.channel and
-                                                                         m.author == ctx.author,
+                                                         m.author == ctx.author,
                                                          timeout=40.0)
                         if msg.content.lower() == 'clear':
                             set_subject_homework(real_subject, 'None')
@@ -155,14 +156,14 @@ class Subject(commands.Cog, name='subject'):
         await self.client.tree.sync()
 
     @set_homework.autocomplete('subject_name')
-    async def help_autocomplete(self, interaction, current):
+    async def help_autocomplete(self, _interaction, current):
         options = [subject_name for subject_name in subject]
         options.insert(0, 'all')
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
     @set_homework.autocomplete('clear')
-    async def help_autocomplete(self, interaction, current):
+    async def help_autocomplete(self, _interaction, current):
         options = ['clear']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]

@@ -33,7 +33,8 @@ class General(commands.Cog, name='general'):
             embed = discord.Embed(color=0x00D4FF, title='bigfatstudier \'homework\' Command',
                                   description=self.client.get_command('homework').description)
             embed.add_field(name='all', value='List all of the homework from every subject_data stored on this bot')
-            embed.add_field(name='*Specific Subject*', value=f'Specify a subject_data to check homework: {all_subjects}')
+            embed.add_field(name='*Specific Subject*',
+                            value=f'Specify a subject_data to check homework: {all_subjects}')
             await ctx.send(embed=embed)
         elif options.lower() == 'set_homework':
             embed = discord.Embed(color=0xB300FF, title='bigfatstudier \'set_homework\' Command',
@@ -47,8 +48,9 @@ class General(commands.Cog, name='general'):
         await self.client.tree.sync()
 
     @help.autocomplete('options')
-    async def help_autocomplete(self, interaction, current):
-        options = [command.name for command in self.client.commands if command.name != 'help' and command.name != 'stop']
+    async def help_autocomplete(self, _interaction, current):
+        options = [command.name for command in self.client.commands if
+                   command.name != 'help' and command.name != 'stop']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 

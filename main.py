@@ -2,11 +2,23 @@
 
 import asyncio
 import os
+import signal
+import sys
+
 import discord
 from discord.ext import commands
 from discord.ext import tasks
 
 import data_config
+
+
+def termination_handler(_signal, _frame):
+    print('Termination signal detected!')
+    data_config.save_all()
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, termination_handler)
 
 intents = discord.Intents.all()
 
