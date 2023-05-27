@@ -14,7 +14,7 @@ class General(commands.Cog, name='general'):
     async def help(self, ctx, options=None):
         all_subjects = ''
         for subject_name in data_config.subject:
-            all_subjects += subject_name + ', '
+            all_subjects += data_config.subject[subject_name]['real'] + ', '
         all_subjects = all_subjects[0:-2]
         if options is None:
             embed = discord.Embed(color=0x255FAB, title='bigfatstudier Bot Commands',
@@ -26,22 +26,23 @@ class General(commands.Cog, name='general'):
             embed = discord.Embed(color=0xFF9100, title='bigfatstudier \'subjects\' Command',
                                   description=self.client.get_command('subjects').description)
             embed.add_field(name='list', value='List all of the subjects stored on this bot')
-            embed.add_field(name='add', value='Add a subject_data to store on this bot')
-            embed.add_field(name='remove', value='Remove a subject_data from this bot')
+            embed.add_field(name='add', value='Add a subject to store on this bot')
+            embed.add_field(name='remove', value='Remove a subject from this bot')
             await ctx.send(embed=embed)
         elif options.lower() == 'homework':
             embed = discord.Embed(color=0x00D4FF, title='bigfatstudier \'homework\' Command',
                                   description=self.client.get_command('homework').description)
-            embed.add_field(name='all', value='List all of the homework from every subject_data stored on this bot')
+            embed.add_field(name='all', value='List all of the homework from every subject stored on this bot')
             embed.add_field(name='*Specific Subject*',
-                            value=f'Specify a subject_data to check homework: {all_subjects}')
+                            value=f'Specify a subject to check homework: {all_subjects}')
             await ctx.send(embed=embed)
-        elif options.lower() == 'set_homework':
-            embed = discord.Embed(color=0xB300FF, title='bigfatstudier \'set_homework\' Command',
-                                  description=self.client.get_command('set_homework').description)
-            embed.add_field(name='Param1: *Specific Subject*',
-                            value=f'Specify a subject_data to set homework to: {all_subjects}')
-            embed.add_field(name='Param2: [clear]', value='Specify whether you want to clear the homework or not')
+        elif options.lower() == 'add_homework':
+            embed = discord.Embed(color=0xB300FF, title='bigfatstudier \'add_homework\' Command',
+                                  description=self.client.get_command('add_homework').description)
+            embed.add_field(name='*Specific Subject*',
+                            value=f'Specify a subject to set homework to: {all_subjects}')
+            embed.add_field(name='Other Parameters',
+                            value='Specify in two follow up messages the assignment name and due date, respectively.')
             await ctx.send(embed=embed)
         else:
             await ctx.send(f'{options} is not a valid command!')

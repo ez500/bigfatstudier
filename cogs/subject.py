@@ -6,15 +6,16 @@ import discord
 from discord.ext import commands
 
 from data_config import subject
-from util import get_real_subject, get_subject_homework, set_subject_homework, add_subject, remove_subject
+from util import get_real_subject, get_subject_homework, add_subject_homework, remove_subject_homework, add_subject, remove_subject
 
 
 class Subject(commands.Cog, name='subject'):
-    def __init__(self, client):
+    def __init__(self, client: commands.Bot):
         self.client = client
 
-    # TODO: SUBJECT ALIAS
+    # TODO: ADD SUBJECT ALIAS
     # TODO: MULTIPLE HOMEWORK ASSIGNMENTS
+    # TODO: INTEGRATE ADD_HOMEWORK AND HOMEWORK COMMAND
     # TODO: Add specific description to subjects command (literals)
     @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
     async def subjects(self, ctx, options=None, *, subject_name=None):
@@ -22,35 +23,49 @@ class Subject(commands.Cog, name='subject'):
             if repr(subject) == '{}':
                 await ctx.send('There are yet to be subjects to be added!')
             else:
-                subject_list = ''
-                for i in subject:
-                    subject_list += i + ', '
+                subject_list = '**Subjects:** '
+                for name in subject:
+                    subject_list += get_real_subject(name)[1] + ', '
                 subject_list = subject_list[0:-2]
                 await ctx.send(subject_list)
         elif options.lower() == 'add':
             if subject_name is None:
-                await ctx.send('You need to specify what subject_data you want to add!')
-            else:
                 try:
-                    add_subject(subject_name)
-                    await ctx.send(f'Successfully added {subject_name} to the subject_data list!')
-                except KeyError:
-                    real_subject = get_real_subject(subject_name)
-                    await ctx.send(f'{real_subject} already exists!')
-                except NameError:
-                    await ctx.send('You can\'t add an \'all\' subject_data!')
+                    await ctx.send('What is the name of the subject you want to add?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Failed to add subject!')
+            try:
+                add_subject(subject_name)
+                await ctx.send(f'Successfully added {subject_name} to the subject list!')
+            except KeyError:
+                real_subject = get_real_subject(subject_name)
+                await ctx.send(f'{real_subject[1]} already exists!')
+            except AttributeError:
+                await ctx.send('You can\'t add an \'all\' subject!')
         elif options.lower() == 'remove':
             if subject_name is None:
-                await ctx.send('You need to specify what subject_data you want to remove!')
-            else:
                 try:
-                    real_subject = get_real_subject(subject_name)
-                    remove_subject(real_subject)
-                    await ctx.send(f'The subject_data {real_subject} has been successfully removed')
-                except KeyError:
-                    await ctx.send(f'There is no such subject_data as {subject_name}!')
+                    await ctx.send('What is the name of the subject you want to remove?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Failed to remove subject!')
+            try:
+                real_subject = get_real_subject(subject_name)
+                remove_subject(real_subject[0])
+                await ctx.send(f'The subject {real_subject[1]} has been successfully removed')
+            except KeyError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
         else:
-            await ctx.send('Invalid arguments!')
+            await ctx.send('Invalid arguments for subjects command')
         await self.client.tree.sync()
 
     @subjects.autocomplete('options')
@@ -61,7 +76,7 @@ class Subject(commands.Cog, name='subject'):
 
     @subjects.autocomplete('subject_name')
     async def help_autocomplete(self, _interaction, current):
-        options = [subject_name for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -69,104 +84,118 @@ class Subject(commands.Cog, name='subject'):
                              description='Know the homework that you have to do for each class')
     async def homework(self, ctx, *, subject_name=None):
         if subject_name is None:
-            await ctx.send('You need to specify what subject_data you want to check homework for!')
-        elif subject_name.lower() == 'all':
-            message = 'Homework for all subjects:\n'
-            for i in subject:
-                message += i + ': ' + subject[i] + '\n'
-            message = message[0:-1]
-            await ctx.send(message)
-        else:
             try:
-                await ctx.send(get_subject_homework(subject_name))
-            except KeyError:
-                await ctx.send(f'There is no such subject_data as {subject_name}!')
+                await ctx.send('What subject to check homework?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Failed to retrieve homework!')
+        elif subject_name.lower() == 'all':
+            if repr(subject) == '{}':
+                await ctx.send('No subjects to check homework for!')
+                return
+            message = 'Homework for all subjects:\n'
+            for name in subject:
+                if repr(subject[name]['homework']) == '[]':
+                    continue
+                message += f'{get_real_subject(name)[1]} + :  + {get_subject_homework(name)} + \n'
+            message = message[0:-1]
+            if message == 'Homework for all subjects:':
+                await ctx.send('There doesn\'t seem to be any homework for any subject.')
+                return
+            await ctx.send(message)
+            return
+        try:
+            if repr(subject[get_real_subject(subject_name)[0]]['homework'] == '[]'):
+                await ctx.send(f'There doesn\'t seem to be any homework for {get_real_subject(subject_name)[1]}.')
+                return
+            await ctx.send(f'Homework for {get_real_subject(subject_name)[1]}: '
+                           f'{get_subject_homework(subject_name)}')
+        except KeyError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
         await self.client.tree.sync()
 
     @homework.autocomplete('subject_name')
     async def help_autocomplete(self, _interaction, current):
-        options = [subject_name for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject]
         options.insert(0, 'all')
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @commands.hybrid_command(brief='Set subject_data homework', description='Set homework for a subject_data')
-    async def set_homework(self, ctx, *, subject_name=None, clear=None):
+    @commands.hybrid_command(brief='Set subject homework', description='Set homework for a subject')
+    async def add_homework(self, ctx, *, subject_name=None):
         if subject_name is None:
-            await ctx.send('You need to specify a subject_data to set the homework to!')
-        elif clear is not None:
-            if clear.lower() == 'clear':
-                if subject_name.lower() == 'all':
-                    if ctx.author.id == 434430979075997707:
-                        try:
-                            await ctx.send('Are you sure you want to clear the homework for all subjects?')
-                            msg = await self.client.wait_for('message',
-                                                             check=lambda m: m.channel == ctx.channel and
-                                                             m.author == ctx.author,
-                                                             timeout=20.0)
-                            if msg.content.lower() == 'yes':
-                                for i in subject:
-                                    set_subject_homework(i, 'None')
-                                await ctx.send('Cleared homework for all subjects')
-                            else:
-                                await ctx.send('Confirmation failed')
-                        except asyncio.exceptions.TimeoutError:
-                            await ctx.send('Timeout! Confirmation failed')
-                    else:
-                        await ctx.send('Sorry, only certain users are able to clear all of the homework.')
-                else:
-                    try:
-                        real_subject = get_real_subject(subject_name)
-                        set_subject_homework(real_subject, 'None')
-                        await ctx.send(f'Successfully cleared the homework of {real_subject}')
-                    except KeyError:
-                        await ctx.send(f'There is no such subject_data as {subject_name}!')
-            else:
-                await ctx.send('Invalid clear argument!')
+            await ctx.send('You need to specify a subject to add homework to!')
+        # elif clear is not None:
+        #     if clear.lower() == 'clear':
+        #         if subject_name.lower() == 'all':
+        #             if ctx.author.id == 434430979075997707:
+        #                 try:
+        #                     await ctx.send('Are you sure you want to clear the homework for all subjects?')
+        #                     msg = await self.client.wait_for(message='message',
+        #                                                      check=lambda m: m.channel == ctx.channel and
+        #                                                      m.author == ctx.author,
+        #                                                      timeout=20.0)
+        #                     if msg.content.lower() == 'yes':
+        #                         for i in subject:
+        #                             add_subject_homework(i, 'None')
+        #                         await ctx.send('Cleared homework for all subjects')
+        #                     else:
+        #                         await ctx.send('Confirmation failed')
+        #                 except asyncio.TimeoutError:
+        #                     await ctx.send('Timeout! Confirmation failed')
+        #             else:
+        #                 await ctx.send('Sorry, only certain users are able to clear all the homework.')
+        #         else:
+        #             try:
+        #                 real_subject = get_real_subject(subject_name)
+        #                 set_subject_homework(real_subject[0], 'None')
+        #                 await ctx.send(f'Successfully cleared the homework of {real_subject[1]}')
+        #             except KeyError:
+        #                 await ctx.send(f'There is no such subject as {subject_name}!')
+        #     else:
+        #         await ctx.send('Invalid clear argument!')
         else:
-            if (subject_name[-5:-1] + subject_name[-1]).lower() == 'clear':
-                subject_name = subject_name[0:-6]
+            try:
+                real_subject = get_real_subject(subject_name)
+                await ctx.send(f'What homework does {real_subject[1]} have?')
+                msg1 = await self.client.wait_for('message',
+                                                  check=lambda m: m.channel == ctx.channel and
+                                                  m.author == ctx.author,
+                                                  timeout=40.0)
+                assignment = msg1.content
+                await ctx.send('What is the due date of this homework assignment? (mm/dd/yy)')
+                msg2 = await self.client.wait_for('message',
+                                                  check=lambda m: m.channel == ctx.channel and
+                                                  m.author == ctx.author,
+                                                  timeout=40.0)
+                due_date = msg2.content
                 try:
-                    real_subject = get_real_subject(subject_name)
-                    set_subject_homework(real_subject, 'None')
-                    await ctx.send(f'Successfully cleared the homework of {real_subject}')
+                    add_subject_homework(real_subject[0], assignment, due_date)
+                    await ctx.send(f'Successfully set the homework of {real_subject[1]} to {assignment} '
+                                   f'due {due_date}')
                 except KeyError:
-                    await ctx.send(f'There is no such subject_data as {subject_name}!')
-            else:
-                if subject_name == 'all':
-                    await ctx.send('You can\'t set a homework for all subjects.')
-                else:
-                    try:
-                        real_subject = get_real_subject(subject_name)
-                        await ctx.send('What homework does that subject_data have?')
-                        msg = await self.client.wait_for('message',
-                                                         check=lambda m: m.channel == ctx.channel and
-                                                         m.author == ctx.author,
-                                                         timeout=40.0)
-                        if msg.content.lower() == 'clear':
-                            set_subject_homework(real_subject, 'None')
-                            await ctx.send(f'Successfully cleared the homework of {real_subject}')
-                        else:
-                            set_subject_homework(real_subject, msg.content)
-                            await ctx.send(f'Successfully set the homework of {real_subject} to {msg.content}')
-                    except KeyError:
-                        await ctx.send(f'There is no such subject_data as {subject_name}!')
-                    except asyncio.exceptions.TimeoutError:
-                        await ctx.send('Timeout! No homework specified in time')
+                    await ctx.send(f'There is no such subject as {subject_name}!')
+                except AttributeError:
+                    await ctx.send(f'You can\'t duplicate homework assignments!')
+            except asyncio.TimeoutError:
+                await ctx.send('Failed to add homework!')
         await self.client.tree.sync()
 
-    @set_homework.autocomplete('subject_name')
+    @add_homework.autocomplete('subject_name')
     async def help_autocomplete(self, _interaction, current):
-        options = [subject_name for subject_name in subject]
-        options.insert(0, 'all')
+        options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @set_homework.autocomplete('clear')
-    async def help_autocomplete(self, _interaction, current):
-        options = ['clear']
-        return [discord.app_commands.Choice(name=option, value=option)
-                for option in options if current.lower() in option.lower()]
+    # @add_homework.autocomplete('clear')
+    # async def help_autocomplete(self, _interaction, current):
+    #     options = ['clear']
+    #     return [discord.app_commands.Choice(name=option, value=option)
+    #             for option in options if current.lower() in option.lower()]
 
 
 async def setup(client):

@@ -9,6 +9,7 @@ import discord
 from discord.ext import commands
 from discord.ext import tasks
 
+import constants
 import data_config
 
 
@@ -30,7 +31,7 @@ client = commands.Bot(command_prefix=';', help_command=None, intents=intents)
 
 @client.event
 async def on_ready():
-    print('Bot ready')
+    print(f'Bot ready. {constants.VERSION}')
 
 
 @client.event
