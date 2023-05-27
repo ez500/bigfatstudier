@@ -1,7 +1,5 @@
 """Utilities"""
 
-from datetime import datetime
-
 import data_config
 from data_config import subject
 
@@ -35,7 +33,7 @@ def get_subject_homework(subject_name: str) -> str:
     if subject_name in subject:
         homework = ''
         for h in subject[subject_name]['homework']:
-            homework += h.name + ", due " + h.due_date
+            homework += f'''{h['name']}, due {h['due_date']} \n'''
         return homework
     raise KeyError('This subject doesn\'t exist!')
 
@@ -45,11 +43,11 @@ def add_subject_homework(subject_name: str, assignment: str, due_date: str) -> N
     assignment = ' '.join(assignment.split())
     if subject_name in subject:
         for h in subject[subject_name]['homework']:
-            if assignment.lower() == h.description:
-                raise AttributeError('This assignment already exists!')  # TODO: BETTER EXCEPTIONS
+            if assignment.lower() == h['description']:
+                raise AttributeError(f'{assignment} already exists in this subject!')  # TODO: BETTER EXCEPTIONS
         subject[subject_name]['homework'].append(data_config.Work(name=assignment,
                                                                   description=assignment.lower(),
-                                                                  due_date=due_date))
+                                                                  due_date=due_date).to_dict())
         return
     raise KeyError('This subject doesn\'t exist!')
 

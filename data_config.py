@@ -1,8 +1,7 @@
 """Configuring data"""
 
 import ast
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, asdict
 
 
 @dataclass
@@ -10,6 +9,9 @@ class Work:
     name: str
     description: str
     due_date: str
+
+    def to_dict(self):
+        return {k: str(v) for k, v in asdict(self).items()}
 
 
 SUBJECT_DATA = {'real': '',

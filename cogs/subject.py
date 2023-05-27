@@ -97,11 +97,11 @@ class Subject(commands.Cog, name='subject'):
             if repr(subject) == '{}':
                 await ctx.send('No subjects to check homework for!')
                 return
-            message = 'Homework for all subjects:\n'
+            message = '# Homework for all subjects:\n'
             for name in subject:
                 if repr(subject[name]['homework']) == '[]':
                     continue
-                message += f'{get_real_subject(name)[1]} + :  + {get_subject_homework(name)} + \n'
+                message += f'**{get_real_subject(name)[1]}**:\n{get_subject_homework(name)}\n'
             message = message[0:-1]
             if message == 'Homework for all subjects:':
                 await ctx.send('There doesn\'t seem to be any homework for any subject.')
@@ -109,10 +109,10 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send(message)
             return
         try:
-            if repr(subject[get_real_subject(subject_name)[0]]['homework'] == '[]'):
+            if len(subject[get_real_subject(subject_name)[0]]['homework']) == 0:
                 await ctx.send(f'There doesn\'t seem to be any homework for {get_real_subject(subject_name)[1]}.')
                 return
-            await ctx.send(f'Homework for {get_real_subject(subject_name)[1]}: '
+            await ctx.send(f'Homework for **{get_real_subject(subject_name)[1]}**:\n'
                            f'{get_subject_homework(subject_name)}')
         except KeyError:
             await ctx.send(f'There is no such subject as {subject_name}!')
