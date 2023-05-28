@@ -6,19 +6,18 @@ import discord
 from discord.ext import commands
 
 from data_config import subject
-from util import get_real_subject, get_subject_homework, add_subject_homework, remove_subject_homework, add_subject, remove_subject
+from util import get_real_subject, get_subject_description, get_subject_homework, add_subject_homework, remove_subject_homework, add_subject, remove_subject
 
 
 class Subject(commands.Cog, name='subject'):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    # TODO: ADD SUBJECT ALIAS
-    # TODO: MULTIPLE HOMEWORK ASSIGNMENTS
-    # TODO: INTEGRATE ADD_HOMEWORK AND HOMEWORK COMMAND
-    # TODO: Add specific description to subjects command (literals)
+    # TODO: ADD REMOVE_HOMEWORK
+    # TODO: ALIAS, DESCRIPTION
+    # TODO: UPDATE EVERYTHING WITH SUBJECT ALIASES
     @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
-    async def subjects(self, ctx, options=None, *, subject_name=None):
+    async def subjects(self, ctx, options=None, *, subject_name=None): # TODO: lists/adds/removes subjects
         if options is None or options.lower() == 'list':
             if repr(subject) == '{}':
                 await ctx.send('There are yet to be subjects to be added!')
@@ -47,7 +46,8 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'{real_subject[1]} already exists!')
             except AttributeError:
                 await ctx.send('You can\'t add an \'all\' subject!')
-        elif options.lower() == 'remove':
+            return
+        if options.lower() == 'remove':
             if subject_name is None:
                 try:
                     await ctx.send('What is the name of the subject you want to remove?')
@@ -64,13 +64,22 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'The subject {real_subject[1]} has been successfully removed')
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
+            return
         else:
-            await ctx.send('Invalid arguments for subjects command')
+            subject_name = f'{options} {subject_name}'
+            try:
+                if get_subject_description(subject_name) == '':
+                    await ctx.send(f'{get_real_subject(subject_name)[1]} has no description!')
+                    return
+                await ctx.send(f'Description of {get_real_subject(subject_name)[1]}:\n'
+                               f'{get_subject_description(subject_name)}')
+            except KeyError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
         await self.client.tree.sync()
 
     @subjects.autocomplete('options')
     async def help_autocomplete(self, _interaction, current):
-        options = ['list', 'add', 'remove']
+        options = ['add', 'remove']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 

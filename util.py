@@ -28,6 +28,13 @@ def remove_subject(subject_name: str) -> None:
     raise KeyError('This subject doesn\'t exist!')
 
 
+def get_subject_description(subject_name: str) -> str:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject:
+        return subject[subject_name]['description']
+    raise KeyError('This subject doesn\'t exist!')
+
+
 def get_subject_homework(subject_name: str) -> str:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject:
@@ -57,7 +64,7 @@ def remove_subject_homework(subject_name: str, assignment: str) -> None:
     assignment = ' '.join(assignment.split())
     if subject_name in subject:
         for h in subject[subject_name]['homework']:
-            if assignment.lower() == h.description:
+            if assignment.lower() == h['description']:
                 subject[subject_name]['homework'].remove(h)
         raise AttributeError('This assignment doesn\'t exist!')
     raise KeyError('This subject doesn\'t exist!')
