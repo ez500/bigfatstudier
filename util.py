@@ -1,7 +1,7 @@
 """Utilities"""
 
 import data_config
-from data_config import subject
+from data_config import *
 
 
 def get_real_subject(subject_name: str) -> list[str]:

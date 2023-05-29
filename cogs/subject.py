@@ -1,13 +1,10 @@
 """Subject commands"""
 
 import asyncio
-
 import discord
 from discord.ext import commands
 
-from data_config import subject
-from util import get_real_subject, get_subject_description, get_subject_homework, add_subject_homework, \
-    remove_subject_homework, add_subject, remove_subject
+from util import *
 
 
 class Subject(commands.Cog, name='subject'):
@@ -40,6 +37,7 @@ class Subject(commands.Cog, name='subject'):
                     subject_name = msg.content
                 except asyncio.TimeoutError:
                     await ctx.send('Failed to add subject!')
+                    return
             try:
                 add_subject(subject_name)
                 await ctx.send(f'Successfully added {subject_name} to the subject list!')
@@ -60,6 +58,7 @@ class Subject(commands.Cog, name='subject'):
                     subject_name = msg.content
                 except asyncio.TimeoutError:
                     await ctx.send('Failed to remove subject!')
+                    return
             try:
                 real_subject = get_real_subject(subject_name)
                 remove_subject(real_subject[0])
@@ -103,6 +102,7 @@ class Subject(commands.Cog, name='subject'):
                 subject_name = msg.content
             except asyncio.TimeoutError:
                 await ctx.send('Failed to retrieve homework!')
+                return
         if subject_name.lower() == 'all':
             if repr(subject) == '{}':
                 await ctx.send('No subjects to check homework for!')

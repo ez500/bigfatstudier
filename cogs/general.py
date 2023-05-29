@@ -3,7 +3,7 @@
 import discord
 from discord.ext import commands
 
-import data_config
+from data_config import subject, save_all
 
 
 class General(commands.Cog, name='general'):
@@ -13,8 +13,8 @@ class General(commands.Cog, name='general'):
     @commands.hybrid_command(brief='List of commands', description='Need help? Call this command!')
     async def help(self, ctx, options=None):
         all_subjects = ''
-        for subject_name in data_config.subject:
-            all_subjects += data_config.subject[subject_name]['real'] + ', '
+        for subject_name in subject:
+            all_subjects += subject[subject_name]['real'] + ', '
         all_subjects = all_subjects[0:-2]
         if options is None:
             embed = discord.Embed(color=0x255FAB, title='bigfatstudier Bot Commands',
@@ -58,7 +58,7 @@ class General(commands.Cog, name='general'):
     @commands.hybrid_command(brief='Kill the bot', description='Kill the bot, but only for for owner')
     async def stop(self, ctx):
         if ctx.author.id == 434430979075997707:
-            data_config.save_all()
+            save_all()
             await ctx.send('Shutting down')
             await self.client.tree.sync()
             await self.client.close()

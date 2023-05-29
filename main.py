@@ -4,18 +4,17 @@ import asyncio
 import os
 import signal
 import sys
-
 import discord
 from discord.ext import commands
 from discord.ext import tasks
 
-import constants
-import data_config
+from constants import *
+from data_config import *
 
 
 def termination_handler(_signal, _frame):
     print('Termination signal detected!')
-    data_config.save_all()
+    save_all()
     sys.exit(0)
 
 
@@ -31,7 +30,7 @@ client = commands.Bot(command_prefix=';', help_command=None, intents=intents)
 
 @client.event
 async def on_ready():
-    print(f'Bot ready. {constants.VERSION}')
+    print(f'Bot ready. {VERSION}')
 
 
 @client.event
@@ -42,7 +41,7 @@ async def on_member_join(member):
 
 @tasks.loop(minutes=10)
 async def save_task():
-    data_config.save_all()
+    save_all()
 
 
 async def load_cogs():
