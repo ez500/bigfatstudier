@@ -1,13 +1,15 @@
 """Temporary calculus math role"""
 
 import asyncio
+import traceback
+
 import discord
 from discord.ext import commands
 
 from data_config import message_listener, generate_message_listener, remove_message_listener
 
 
-class SummerMathProgram(commands.Cog, name='summer_math_program'):
+class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
     def __init__(self, client):
         self.client = client
 
@@ -16,37 +18,65 @@ class SummerMathProgram(commands.Cog, name='summer_math_program'):
         if message.id in message_listener:
             remove_message_listener(message.id)
 
-    @commands.Cog.listener()
-    async def on_reaction_add(self, reaction: discord.Reaction, user: discord.Member):
+    @commands.Cog.listener('on_reaction_add')
+    async def message_reaction_listener(self, reaction, user):
+        if user.id == 970868539022008330:
+            return
         guild = user.guild
-        msg = reaction.message.id
-        emoji = reaction.emoji.id
-        if msg in message_listener and emoji in message_listener[msg]['emoji']:
-            await user.add_roles(
-                message_listener[msg]['role'][guild.get_role(message_listener[msg]['emoji'].index(emoji))])
+        msg_id = reaction.message.id
+        emoji_name = reaction.emoji.name
+        role_name = None
+        if msg_id in message_listener and emoji_name in message_listener[msg_id]['emoji']:
+            role_id = message_listener[msg_id]['role'][message_listener[msg_id]['emoji'].index(emoji_name)]
+            role_name = guild.get_role(role_id).name
+            await user.add_roles(guild.get_role(role_id))
+        if role_name is None:
+            await reaction.message.channel.send(f'This reaction message does not work anymore. Delete the'
+                                                f' reaction message and rerun the reaction_message command.')
+            return
+
+    @commands.Cog.listener('on_reaction_remove')
+    async def message_reaction_remove_listener(self, reaction, user):
+        guild = user.guild
+        msg_id = reaction.message.id
+        emoji_name = reaction.emoji.name
+        role_name = None
+        if msg_id in message_listener and emoji_name in message_listener[msg_id]['emoji']:
+            role_id = message_listener[msg_id]['role'][message_listener[msg_id]['emoji'].index(emoji_name)]
+            role_name = guild.get_role(role_id).name
+            await user.remove_roles(guild.get_role(role_id))
+        if role_name is None:
+            await reaction.message.channel.send(f'This reaction message does not work anymore. Delete the'
+                                                f' reaction message and rerun the reaction_message command.')
+            return
 
     @commands.hybrid_command()
     async def reaction_message(self, ctx, *, emojis=None):
         if emojis is None:
-            await ctx.send('You need emojis of the reactions to listen to!')
+            try:
+                await ctx.send('What emojis will be listened to?')
+                emojis = await self.client.wait_for('message',
+                                                    check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
+                                                    timeout=40.0)
+                emojis = emojis.content
+            except asyncio.TimeoutError:
+                await ctx.send('Failed to add message to listen to!')
         emojis = emojis.split()
         emoji_listener = []
         role_listener = []
         try:
-            await ctx.send('Send the message to be listened to for reactions.')
+            await ctx.send('What is the message to be listened to for reactions?')
             msg = await self.client.wait_for('message',
                                              check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
                                              timeout=40.0)
             for emoji in emojis:
                 if len(emoji) > 1:
+                    emoji = emoji[2:emoji.index(':', 2, -1)]
                     if emoji not in [guild_emoji.name for guild_emoji in await ctx.guild.fetch_emojis()]:
-                        await ctx.send(f'{emoji} is not a valid emoji name! Sorry, partial emojis are not supported.')
+                        await ctx.send(f'{emoji} is not a valid emoji name! Sorry, emojis from other servers'
+                                       f' are not supported.')
                         return
-                    for guild_emoji in await ctx.guild.fetch_emojis():
-                        if emoji == guild_emoji.name:
-                            emoji_listener.append(guild_emoji.id)
-                else:
-                    emoji_listener.append(e.demojize(emoji)) # TODO: FIX
+                emoji_listener.append(emoji)
             for emoji in emojis:
                 await ctx.send(f'What is the name of the role associated with {emoji}?')
                 role = await self.client.wait_for('message',
@@ -62,9 +92,16 @@ class SummerMathProgram(commands.Cog, name='summer_math_program'):
         except asyncio.TimeoutError:
             await ctx.send('Failed to add message to listen to!')
             return
-        msg_listener = await ctx.send(msg.content)
+        msg_listener = await ctx.message.channel.send(msg.content)
+        for emoji in emoji_listener:
+            if len(emoji) > 1:
+                for e in await msg_listener.guild.fetch_emojis():
+                    if emoji == e.name:
+                        await msg_listener.add_reaction(e)
+                continue
+            await msg_listener.add_reaction(emoji)
         generate_message_listener(msg_listener.id, emoji_listener, role_listener)
 
 
 async def setup(client):
-    await client.add_cog(SummerMathProgram(client))
+    await client.add_cog(MessageReactionListener(client))
