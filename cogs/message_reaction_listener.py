@@ -18,36 +18,42 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
         if message.id in message_listener:
             remove_message_listener(message.id)
 
-    @commands.Cog.listener('on_reaction_add')
-    async def message_reaction_listener(self, reaction, user):
-        if user.id == 970868539022008330:
-            return
-        guild = user.guild
-        msg_id = reaction.message.id
-        emoji_name = reaction.emoji.name
+    @commands.Cog.listener('on_raw_reaction_add')
+    async def message_reaction_add_listener(self, payload):
+        guild = await self.client.fetch_guild(payload.guild_id)
+        channel = await guild.fetch_channel(payload.channel_id)
+        member = await guild.fetch_member(payload.user_id)
+        msg_id = payload.message_id
+        emoji_name = payload.emoji.name
         role_name = None
+        if payload.user_id == 970868539022008330:
+            return
+        if msg_id not in message_listener:
+            return
         if msg_id in message_listener and emoji_name in message_listener[msg_id]['emoji']:
             role_id = message_listener[msg_id]['role'][message_listener[msg_id]['emoji'].index(emoji_name)]
             role_name = guild.get_role(role_id).name
-            await user.add_roles(guild.get_role(role_id))
+            await member.add_roles(guild.get_role(role_id))
         if role_name is None:
-            await reaction.message.channel.send(f'This reaction message does not work anymore. Delete the'
-                                                f' reaction message and rerun the reaction_message command.')
+            await channel.send(f'This reaction message does not work anymore. Delete the'
+                               f' reaction message and rerun the reaction_message command.')
             return
 
-    @commands.Cog.listener('on_reaction_remove')
-    async def message_reaction_remove_listener(self, reaction, user):
-        guild = user.guild
-        msg_id = reaction.message.id
-        emoji_name = reaction.emoji.name
+    @commands.Cog.listener('on_raw_reaction_remove')
+    async def message_reaction_remove_listener(self, payload):
+        guild = await self.client.fetch_guild(payload.guild_id)
+        channel = await guild.fetch_channel(payload.channel_id)
+        member = await guild.fetch_member(payload.user_id)
+        msg_id = payload.message_id
+        emoji_name = payload.emoji.name
         role_name = None
         if msg_id in message_listener and emoji_name in message_listener[msg_id]['emoji']:
             role_id = message_listener[msg_id]['role'][message_listener[msg_id]['emoji'].index(emoji_name)]
             role_name = guild.get_role(role_id).name
-            await user.remove_roles(guild.get_role(role_id))
+            await member.remove_roles(guild.get_role(role_id))
         if role_name is None:
-            await reaction.message.channel.send(f'This reaction message does not work anymore. Delete the'
-                                                f' reaction message and rerun the reaction_message command.')
+            await channel.send(f'This reaction message does not work anymore. Delete the'
+                               f' reaction message and rerun the reaction_message command.')
             return
 
     @commands.hybrid_command()
