@@ -31,10 +31,10 @@ with open('./data/message_data', 'r', encoding='utf-8') as f:
 
 
 def save_all() -> None:
-    with open('./data/subject_data', 'w') as f:
-        f.write(repr(subject))
-    with open('./data/message_data', 'w', encoding='utf-8') as f:
-        f.write(repr(message_listener))
+    with open('./data/subject_data', 'w') as file:
+        file.write(repr(subject))
+    with open('./data/message_data', 'w', encoding='utf-8') as file:
+        file.write(repr(message_listener))
 
 
 def _generate_default_data(data: dict, default: dict):
