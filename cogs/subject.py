@@ -17,16 +17,17 @@ class Subject(commands.Cog, name='subject'):
     @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
     async def subjects(self, ctx, options=None, *, subject_name=None):  # lists/add/remove subject, list description
         if options is None or options.lower() == 'list':
-            if repr(subject) == '{}':
-                await ctx.send('There are yet to be subjects to be added!')
+            if subject_name is None:
+                if repr(subject) == '{}':
+                    await ctx.send('There are yet to be subjects to be added!')
+                    return
+                subject_list = '**Subjects:** '
+                for name in subject:
+                    subject_list += get_real_subject(name)[1] + ', '
+                subject_list = subject_list[0:-2]
+                await ctx.send(subject_list)
                 return
-            subject_list = '**Subjects:** '
-            for name in subject:
-                subject_list += get_real_subject(name)[1] + ', '
-            subject_list = subject_list[0:-2]
-            await ctx.send(subject_list)
-            return
-        if options.lower() == 'add':
+        elif options.lower() == 'add':
             if subject_name is None:
                 try:
                     await ctx.send('What is the name of the subject you want to add?')
@@ -47,7 +48,7 @@ class Subject(commands.Cog, name='subject'):
             except AttributeError:
                 await ctx.send('You can\'t add an \'all\' subject!')
             return
-        if options.lower() == 'remove':
+        elif options.lower() == 'remove':
             if subject_name is None:
                 try:
                     await ctx.send('What is the name of the subject you want to remove?')
@@ -66,13 +67,15 @@ class Subject(commands.Cog, name='subject'):
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
             return
-        subject_name = f'{options} {subject_name}'
+        subject_name = f'{options} {subject_name}' if options is not None else subject_name
         try:
-            if get_subject_description(subject_name) == '':
-                await ctx.send(f'{get_real_subject(subject_name)[1]} has no description!')
-                return
-            await ctx.send(f'Description of {get_real_subject(subject_name)[1]}:\n'
-                           f'{get_subject_description(subject_name)}')
+            subject_name = get_real_subject(subject_name)
+            aliases = ', '.join(get_alias(subject_name[0]))
+            await ctx.send(f'**{subject_name[1]}**:\n'
+                           f'Aliases: '
+                           f'''{aliases}\n'''
+                           f'Description: '
+                           f'{get_subject_description(subject_name[0])}')
         except KeyError:
             await ctx.send(f'There is no such subject as {subject_name}!')
         await self.client.tree.sync()
@@ -103,7 +106,7 @@ class Subject(commands.Cog, name='subject'):
             except asyncio.TimeoutError:
                 await ctx.send('Failed to retrieve homework!')
                 return
-        if subject_name.lower() == 'all':
+        elif subject_name.lower() == 'all':
             if repr(subject) == '{}':
                 await ctx.send('No subjects to check homework for!')
                 return
