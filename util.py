@@ -56,9 +56,9 @@ def add_subject_homework(subject_name: str, assignment: str, due_date: str) -> N
     subject_name = ' '.join(subject_name.split()).lower()
     assignment = ' '.join(assignment.split())
     if subject_name in subject:
-        for h in subject[subject_name]['homework']:
-            if assignment.lower() == h['description']:
-                raise AttributeError(f'{assignment} already exists in this subject!')  # TODO: BETTER EXCEPTIONS
+        for homework in subject[subject_name]['homework']:
+            if assignment.lower() == homework['description']:
+                raise AttributeError(f'{assignment} already exists in this subject!')
         subject[subject_name]['homework'].append(data_config.Work(name=assignment,
                                                                   description=assignment.lower(),
                                                                   due_date=due_date).to_dict())
@@ -82,4 +82,5 @@ def clear_subject_homework(subject_name: str) -> None:
     if subject_name in subject:
         for homework in subject[subject_name]['homework']:
             subject[subject_name]['homework'].remove(homework)
+        return
     raise KeyError('This subject doesn\'t exist!')

@@ -1,6 +1,8 @@
 """Subject commands"""
 
 import asyncio
+import datetime
+
 import discord
 from discord.ext import commands
 
@@ -146,7 +148,7 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send('What subject to clear homework?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
-                                                                 m.author == ctx.author,
+                                                 m.author == ctx.author,
                                                  timeout=20.0)
                 subject_name = msg.content + ' clear'
                 _clear = None
@@ -160,14 +162,15 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('Sorry, but you cannot clear homework for all subjects.')
                     return
                 try:
-                    await ctx.send(f'Are you sure you want to clear the homework for {get_real_subject(subject_name)[1]}?')
+                    await ctx.send(f'Are you sure you want to clear the homework for '
+                                   f'{get_real_subject(subject_name)[1]}?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
                                                      m.author == ctx.author,
                                                      timeout=20.0)
                     if msg.content.lower() == 'yes':
-                        clear_subject_homework(subject_name)
-                        await ctx.send('Cleared homework for all subjects')
+                        clear_subject_homework(get_real_subject(subject_name)[0])
+                        await ctx.send(f'Cleared homework for {get_real_subject(subject_name)[1]}')
                     else:
                         await ctx.send('Confirmation failed')
                 except asyncio.TimeoutError:
@@ -188,11 +191,11 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'Are you sure you want to clear the homework for {get_real_subject(subject_name)[1]}?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
-                                                                 m.author == ctx.author,
+                                                 m.author == ctx.author,
                                                  timeout=20.0)
                 if msg.content.lower() == 'yes':
-                    clear_subject_homework(subject_name)
-                    await ctx.send('Cleared homework for all subjects')
+                    clear_subject_homework(get_real_subject(subject_name)[0])
+                    await ctx.send(f'Cleared homework for {get_real_subject(subject_name)[1]}')
                 else:
                     await ctx.send('Confirmation failed')
             except asyncio.TimeoutError:
@@ -238,12 +241,17 @@ class Subject(commands.Cog, name='subject'):
                                               m.author == ctx.author,
                                               timeout=40.0)
             assignment = msg1.content
-            await ctx.send('What is the due date of this homework assignment? (mm/dd/yy)')
+            await ctx.send('What is the due date of this homework assignment? (mm/dd/yyyy)')
             msg2 = await self.client.wait_for('message',
                                               check=lambda m: m.channel == ctx.channel and
                                               m.author == ctx.author,
                                               timeout=40.0)
             due_date = msg2.content
+            try:
+                datetime.datetime.strptime(due_date, '%m/%d/%Y')
+            except ValueError:
+                await ctx.send('Not a valid date in the specified format!')
+                return
             try:
                 add_subject_homework(real_subject[0], assignment, due_date)
                 await ctx.send(f'Successfully set the homework of {real_subject[1]} to {assignment} '
