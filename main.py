@@ -30,18 +30,15 @@ client = commands.Bot(command_prefix=';', help_command=None, intents=intents)
 
 @client.event
 async def on_ready():
-    print(f'Bot ready. {VERSION}')
-
-
-@client.event
-async def on_member_join(member):
     await client.change_presence(status=discord.Status.do_not_disturb)
-    print(f'{member} just joined')
+    await client.tree.sync()
+    print(f'Bot ready. {VERSION}')
 
 
 @tasks.loop(minutes=10)
 async def save_task():
     save_all()
+    await client.tree.sync()
 
 
 async def load_cogs():

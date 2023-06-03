@@ -10,6 +10,10 @@ class General(commands.Cog, name='general'):
     def __init__(self, client):
         self.client = client
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        print(f'{member} just joined')
+
     @commands.hybrid_command(brief='List of commands', description='Need help? Call this command!')
     async def help(self, ctx, options=None):
         all_subjects = ''
@@ -46,7 +50,6 @@ class General(commands.Cog, name='general'):
             await ctx.send(embed=embed)
         else:
             await ctx.send(f'{options} is not a valid command!')
-        await self.client.tree.sync()
 
     @help.autocomplete('options')
     async def help_autocomplete(self, _interaction, current):
@@ -64,7 +67,6 @@ class General(commands.Cog, name='general'):
             await self.client.close()
         else:
             await ctx.send('You think I\'d let anyone close the bot?')
-            await self.client.tree.sync()
 
 
 async def setup(client):
