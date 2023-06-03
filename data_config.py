@@ -15,7 +15,7 @@ class Work:
 
 
 SUBJECT_DATA = {'real': '',
-                'alias': ['No aliases'],
+                'alias': [],
                 'description': 'No description',
                 'homework': [],
                 'project': [],

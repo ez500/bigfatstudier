@@ -28,10 +28,32 @@ def remove_subject(subject_name: str) -> None:
     raise KeyError('This subject doesn\'t exist!')
 
 
-def get_alias(subject_name: str) -> list[str]:
+def get_subject_alias(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject:
         return subject[subject_name]['alias']
+    raise KeyError('This subject doesn\'t exist!')
+
+
+def add_subject_alias(subject_name: str, subject_alias: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject:
+        for alias in subject[subject_name]['alias']:
+            if alias.lower() == subject_alias:
+                raise AttributeError(f'{subject_alias} is already an alias!')
+        subject[subject_name]['alias'].append(subject_alias)
+        return
+    raise KeyError('This subject doesn\'t exist!')
+
+
+def remove_subject_alias(subject_name: str, subject_alias: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject:
+        for alias in subject[subject_name]['alias']:
+            if alias.lower() == subject_alias:
+                subject[subject_name]['alias'].remove(subject_alias)
+                return
+        raise AttributeError(f'{subject_alias} isn\'t an alias!')
     raise KeyError('This subject doesn\'t exist!')
 
 

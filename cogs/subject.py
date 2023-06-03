@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import traceback
 
 import discord
 from discord.ext import commands
@@ -39,7 +40,7 @@ class Subject(commands.Cog, name='subject'):
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
-                    await ctx.send('Failed to add subject!')
+                    await ctx.send('Timeout! Failed to add subject!')
                     return
             try:
                 add_subject(subject_name)
@@ -60,7 +61,7 @@ class Subject(commands.Cog, name='subject'):
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
-                    await ctx.send('Failed to remove subject!')
+                    await ctx.send('Timeout! Failed to remove subject!')
                     return
             try:
                 real_subject = get_real_subject(subject_name)
@@ -69,15 +70,16 @@ class Subject(commands.Cog, name='subject'):
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
             return
-        subject_name = f'{options} {subject_name}' if options is not None else subject_name
+        else:
+            subject_name = f'{options} {subject_name}'
         try:
-            subject_name = get_real_subject(subject_name)
-            aliases = ', '.join(get_alias(subject_name[0]))
-            await ctx.send(f'**{subject_name[1]}**:\n'
+            real_subject = get_real_subject(subject_name)
+            aliases = ', '.join(get_subject_alias(real_subject[0]))
+            await ctx.send(f'**{real_subject[1]}**:\n'
                            f'Aliases: '
-                           f'''{aliases}\n'''
+                           f'''{aliases if len(aliases) > 0 else 'No aliases'}\n'''
                            f'Description: '
-                           f'{get_subject_description(subject_name[0])}')
+                           f'{get_subject_description(real_subject[0])}')
         except KeyError:
             await ctx.send(f'There is no such subject as {subject_name}!')
 
@@ -88,6 +90,107 @@ class Subject(commands.Cog, name='subject'):
                 for option in options if current.lower() in option.lower()]
 
     @subjects.autocomplete('subject_name')
+    async def help_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Manage alias',
+                             description='Add or remove aliases to subjects to make them more accessible')
+    async def alias(self, ctx, options=None, *, subject_name=None):
+        if options is None or options.lower() == 'list':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to view aliases?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to retrieve aliases!')
+                    return
+        elif options.lower() == 'add':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to add alias to?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to add alias!')
+                    return
+            try:
+                real_subject = get_real_subject(subject_name)
+                await ctx.send(f'What is the alias to add to {real_subject[1]}?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                alias_name = msg.content
+            except KeyError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
+                return
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to add alias!')
+                return
+            try:
+                add_subject_alias(real_subject[0], alias_name)
+                await ctx.send(f'Added {alias_name} to the list of aliases of {real_subject[1]}!')
+            except AttributeError:
+                await ctx.send(f'{alias_name} already exists as an alias to {real_subject[1]}!')
+            return
+        elif options.lower() == 'remove':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to remove alias from?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to remove alias!')
+                    return
+            try:
+                real_subject = get_real_subject(subject_name)
+                await ctx.send(f'What is the alias to remove from {real_subject[1]}?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                alias_name = msg.content
+            except KeyError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
+                return
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to add alias!')
+                return
+            try:
+                remove_subject_alias(real_subject[0], alias_name)
+                await ctx.send(f'Removed {alias_name} from the list of aliases of {real_subject[1]}!')
+            except AttributeError:
+                await ctx.send(f'There is no such alias as {alias_name} in {real_subject[1]}!')
+            return
+        else:
+            subject_name = f'{options} {subject_name}'
+        try:
+            real_subject = get_real_subject(subject_name)
+            aliases = ', '.join(get_subject_alias(real_subject[0]))
+            await ctx.send(f'''Aliases of {real_subject[1]}: {aliases if len(aliases) > 0 else 'No aliases'}''')
+            return
+        except KeyError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+
+    @alias.autocomplete('options')
+    async def help_autocomplete(self, _interaction, current):
+        options = ['list', 'add', 'remove']
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @alias.autocomplete('subject_name')
     async def help_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
@@ -106,7 +209,7 @@ class Subject(commands.Cog, name='subject'):
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
-                    await ctx.send('Failed to retrieve homework!')
+                    await ctx.send('Timeout! Failed to retrieve homework!')
                     return
             elif _clear.lower() == 'clear':
                 try:
@@ -118,7 +221,7 @@ class Subject(commands.Cog, name='subject'):
                     subject_name = msg.content + ' clear'
                     _clear = None
                 except asyncio.TimeoutError:
-                    await ctx.send('Failed to clear homework!')
+                    await ctx.send('Timeout! Failed to clear homework!')
                     return
         elif subject_name.lower() == 'all':
             if _clear is None:
@@ -153,7 +256,7 @@ class Subject(commands.Cog, name='subject'):
                 subject_name = msg.content + ' clear'
                 _clear = None
             except asyncio.TimeoutError:
-                await ctx.send('Failed to clear homework!')
+                await ctx.send('Timeout! Failed to clear homework!')
                 return
         if _clear is None:
             if subject_name.split()[-1] == 'clear':
@@ -162,15 +265,16 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('Sorry, but you cannot clear homework for all subjects.')
                     return
                 try:
+                    real_subject = get_real_subject(subject_name)
                     await ctx.send(f'Are you sure you want to clear the homework for '
-                                   f'{get_real_subject(subject_name)[1]}?')
+                                   f'{real_subject[1]}?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
                                                      m.author == ctx.author,
                                                      timeout=20.0)
                     if msg.content.lower() == 'yes':
-                        clear_subject_homework(get_real_subject(subject_name)[0])
-                        await ctx.send(f'Cleared homework for {get_real_subject(subject_name)[1]}')
+                        clear_subject_homework(real_subject[0])
+                        await ctx.send(f'Cleared homework for {real_subject[1]}')
                     else:
                         await ctx.send('Confirmation failed')
                 except asyncio.TimeoutError:
@@ -179,23 +283,25 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send(f'There is no such subject as {subject_name}!')
                 return
             try:
-                if len(subject[get_real_subject(subject_name)[0]]['homework']) == 0:
-                    await ctx.send(f'There doesn\'t seem to be any homework for {get_real_subject(subject_name)[1]}.')
+                real_subject = get_real_subject(subject_name)
+                if len(subject[real_subject[0]]['homework']) == 0:
+                    await ctx.send(f'There doesn\'t seem to be any homework for {real_subject[1]}.')
                     return
-                await ctx.send(f'Homework for **{get_real_subject(subject_name)[1]}**:\n'
-                               f'{get_subject_homework(subject_name)}')
+                await ctx.send(f'Homework for **{real_subject[1]}**:\n'
+                               f'{get_subject_homework(real_subject[0])}')
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
         if _clear.lower() == 'clear':
             try:
-                await ctx.send(f'Are you sure you want to clear the homework for {get_real_subject(subject_name)[1]}?')
+                real_subject = get_real_subject(subject_name)
+                await ctx.send(f'Are you sure you want to clear the homework for {real_subject[1]}?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
                                                  m.author == ctx.author,
                                                  timeout=20.0)
                 if msg.content.lower() == 'yes':
-                    clear_subject_homework(get_real_subject(subject_name)[0])
-                    await ctx.send(f'Cleared homework for {get_real_subject(subject_name)[1]}')
+                    clear_subject_homework(real_subject[0])
+                    await ctx.send(f'Cleared homework for {real_subject[1]}')
                 else:
                     await ctx.send('Confirmation failed')
             except asyncio.TimeoutError:
@@ -231,7 +337,7 @@ class Subject(commands.Cog, name='subject'):
                                                  timeout=20.0)
                 subject_name = msg.content
             except asyncio.TimeoutError:
-                await ctx.send('Failed to retrieve homework!')
+                await ctx.send('Timeout! Failed to retrieve homework!')
                 return
         try:
             real_subject = get_real_subject(subject_name)
@@ -247,21 +353,22 @@ class Subject(commands.Cog, name='subject'):
                                               m.author == ctx.author,
                                               timeout=40.0)
             due_date = msg2.content
-            try:
-                datetime.datetime.strptime(due_date, '%m/%d/%Y')
-            except ValueError:
-                await ctx.send('Not a valid date in the specified format!')
-                return
-            try:
-                add_subject_homework(real_subject[0], assignment, due_date)
-                await ctx.send(f'Successfully set the homework of {real_subject[1]} to {assignment} '
-                               f'due {due_date}')
-            except KeyError:
-                await ctx.send(f'There is no such subject as {subject_name}!')
-            except AttributeError:
-                await ctx.send(f'You can\'t duplicate homework assignments!')
         except asyncio.TimeoutError:
-            await ctx.send('Failed to add homework!')
+            await ctx.send('Timeout! Failed to add homework!')
+            return
+        try:
+            datetime.datetime.strptime(due_date, '%m/%d/%Y')
+        except ValueError:
+            await ctx.send('Not a valid date in the specified format!')
+            return
+        try:
+            add_subject_homework(real_subject[0], assignment, due_date)
+            await ctx.send(f'Successfully set the homework of {real_subject[1]} to {assignment} '
+                           f'due {due_date}')
+        except KeyError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+        except AttributeError:
+            await ctx.send(f'You can\'t duplicate homework assignments!')
 
     @add_homework.autocomplete('subject_name')
     async def help_autocomplete(self, _interaction, current):
