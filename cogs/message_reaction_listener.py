@@ -1,4 +1,4 @@
-"""Temporary calculus math role"""
+"""Role giving listener based on messages"""
 
 import asyncio
 

@@ -2,7 +2,6 @@
 
 import asyncio
 import datetime
-import traceback
 
 import discord
 from discord.ext import commands
@@ -14,8 +13,8 @@ class Subject(commands.Cog, name='subject'):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    # TODO: ADD REMOVE_HOMEWORK
-    # TODO: ALIAS, DESCRIPTION
+    # TODO: ADD DAILY REMINDERS
+    # TODO: DESCRIPTION
     # TODO: UPDATE EVERYTHING WITH SUBJECT ALIASES
     @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
     async def subjects(self, ctx, options=None, *, subject_name=None):  # lists/add/remove subject, list description
