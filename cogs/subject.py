@@ -76,10 +76,8 @@ class Subject(commands.Cog, name='subject'):
             real_subject = get_real_subject(subject_name)
             aliases = ', '.join(get_subject_alias(real_subject[0]))
             await ctx.send(f'**{real_subject[1]}**:\n'
-                           f'Aliases: '
-                           f'''{aliases if len(aliases) > 0 else 'No aliases'}\n'''
-                           f'Description: '
-                           f'{get_subject_description(real_subject[0])}')
+                           f'''Aliases: {aliases if len(aliases) > 0 else 'No aliases'}\n'''
+                           f'Description: {get_subject_description(real_subject[0])}')
         except KeyError:
             await ctx.send(f'There is no such subject as {subject_name}!')
 
@@ -233,7 +231,7 @@ class Subject(commands.Cog, name='subject'):
                     if repr(subject[name]['homework']) == '[]':
                         message += f'**{get_real_subject(name)[1]}** has no homework.\n'
                         continue
-                    message += f'**{get_real_subject(name)[1]}**:\n{get_subject_homework(name)}\n'
+                    message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_homework(name)) + '\n'
                 message = message[0:-1]
                 if message == 'Homework for all subjects:':
                     await ctx.send('There doesn\'t seem to be any homework for any subject.')
@@ -287,8 +285,8 @@ class Subject(commands.Cog, name='subject'):
                 if len(subject[real_subject[0]]['homework']) == 0:
                     await ctx.send(f'There doesn\'t seem to be any homework for {real_subject[1]}.')
                     return
-                await ctx.send(f'Homework for **{real_subject[1]}**:\n'
-                               f'{get_subject_homework(real_subject[0])}')
+                await ctx.send(f'Homework for **{real_subject[1]}**:\n' +
+                               '\n'.join(get_subject_homework(real_subject[0])))
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
         if _clear.lower() == 'clear':
@@ -337,7 +335,7 @@ class Subject(commands.Cog, name='subject'):
                                                  timeout=20.0)
                 subject_name = msg.content
             except asyncio.TimeoutError:
-                await ctx.send('Timeout! Failed to retrieve homework!')
+                await ctx.send('Timeout! Failed to add homework!')
                 return
         try:
             real_subject = get_real_subject(subject_name)
@@ -371,6 +369,48 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send(f'You can\'t duplicate homework assignments!')
 
     @add_homework.autocomplete('subject_name')
+    async def help_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Set subject homework', description='Set homework for a subject')
+    async def remove_homework(self, ctx, *, subject_name=None):
+        if subject_name is None:
+            try:
+                await ctx.send('What subject to remove homework?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to remove homework!')
+                return
+        try:
+            real_subject = get_real_subject(subject_name)
+            if len(get_subject_homework(real_subject[0])) == 0:
+                await ctx.send(f'{real_subject[1]} has no homework to remove!')
+                return
+            await ctx.send(f'What homework in {real_subject[1]} to remove? '
+                           f'''Current assignments: {', '.join(get_subject_homework_name(real_subject[0]))}''')
+            msg1 = await self.client.wait_for('message',
+                                              check=lambda m: m.channel == ctx.channel and
+                                              m.author == ctx.author,
+                                              timeout=40.0)
+            assignment = msg1.content
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to remove homework!')
+            return
+        try:
+            remove_subject_homework(real_subject[0], assignment)
+            await ctx.send(f'''Successfully removed homework '{assignment}' from {real_subject[1]}''')
+        except KeyError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+        except AttributeError:
+            await ctx.send(f'{assignment} doesn\'t exist!')
+
+    @remove_homework.autocomplete('subject_name')
     async def help_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)

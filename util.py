@@ -64,12 +64,22 @@ def get_subject_description(subject_name: str) -> str:
     raise KeyError('This subject doesn\'t exist!')
 
 
-def get_subject_homework(subject_name: str) -> str:
+def get_subject_homework(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject:
-        homework = ''
+        homework = []
         for h in subject[subject_name]['homework']:
-            homework += f'''{h['name']}, due {h['due_date']} \n'''
+            homework.append(f'''{h['name']}, due {h['due_date']}''')
+        return homework
+    raise KeyError('This subject doesn\'t exist!')
+
+
+def get_subject_homework_name(subject_name: str) -> list[str]:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject:
+        homework = []
+        for h in subject[subject_name]['homework']:
+            homework.append(h['name'])
         return homework
     raise KeyError('This subject doesn\'t exist!')
 
