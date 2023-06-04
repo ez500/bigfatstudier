@@ -188,7 +188,98 @@ class Subject(commands.Cog, name='subject'):
                 for option in options if current.lower() in option.lower()]
 
     @alias.autocomplete('subject_name')
-    async def help_autocomplete(self, _interaction, current):
+    async def subject_name_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Manage description',
+                             description='List, set, or clear description of subjects')
+    async def description(self, ctx, options=None, *, subject_name=None):
+        if options is None or options.lower() == 'list':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to view description?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to retrieve aliases!')
+                    return
+        elif options.lower() == 'set':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to set description?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to set description!')
+                    return
+            try:
+                real_subject = get_real_subject(subject_name)
+                await ctx.send(f'What is the description for {real_subject[1]}?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_description = msg.content
+            except KeyError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
+                return
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to set description!')
+                return
+            try:
+                set_subject_description(real_subject[0], subject_description)
+                await ctx.send(f'Set description of {real_subject[1]} to *{subject_description}*!')
+            except AttributeError:
+                await ctx.send(f'{subject_description} is already the description of {real_subject[1]}!')
+            return
+        elif options.lower() == 'clear':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to clear description?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to clear description!')
+                    return
+            try:
+                real_subject = get_real_subject(subject_name)
+            except KeyError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
+                return
+            try:
+                set_subject_description(real_subject[0], 'No description')
+                await ctx.send(f'Cleared description of {real_subject[1]}!')
+            except AttributeError:
+                await ctx.send(f'{real_subject[1]} has no description to clear!')
+            return
+        else:
+            subject_name = f'{options} {subject_name}'
+        try:
+            real_subject = get_real_subject(subject_name)
+            await ctx.send(f'**{real_subject[1]} description:** {get_subject_description(real_subject[0])}')
+            return
+        except KeyError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+
+    @description.autocomplete('options')
+    async def description_options_autocomplete(self, _interaction, current):
+        options = ['list', 'set', 'clear']
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @description.autocomplete('subject_name')
+    async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -344,7 +435,7 @@ class Subject(commands.Cog, name='subject'):
                                               m.author == ctx.author,
                                               timeout=40.0)
             assignment = msg1.content
-            await ctx.send('What is the due date of this homework assignment? (mm/dd/yyyy)')
+            await ctx.send('What is the due date of this homework assignment? (mm/dd/yyyy)')  # TODO: CHECK IF PAST
             msg2 = await self.client.wait_for('message',
                                               check=lambda m: m.channel == ctx.channel and
                                               m.author == ctx.author,
@@ -373,7 +464,7 @@ class Subject(commands.Cog, name='subject'):
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @commands.hybrid_command(brief='Set subject homework', description='Set homework for a subject')
+    @commands.hybrid_command(brief='Remove subject homework', description='Remove homework from a subject')
     async def remove_homework(self, ctx, *, subject_name=None):
         if subject_name is None:
             try:

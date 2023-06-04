@@ -64,6 +64,16 @@ def get_subject_description(subject_name: str) -> str:
     raise KeyError('This subject doesn\'t exist!')
 
 
+def set_subject_description(subject_name: str, subject_description: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject:
+        if subject[subject_name]['description'] == subject_description.lower():
+            raise AttributeError(f'{subject_description} is already the description!')
+        subject[subject_name]['description'] = subject_description
+        return
+    raise KeyError('This subject doesn\'t exist!')
+
+
 def get_subject_homework(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject:
