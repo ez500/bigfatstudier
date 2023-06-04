@@ -81,19 +81,19 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send(f'There is no such subject as {subject_name}!')
 
     @subjects.autocomplete('options')
-    async def help_autocomplete(self, _interaction, current):
+    async def subject_options_autocomplete(self, _interaction, current):
         options = ['list', 'add', 'remove']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
     @subjects.autocomplete('subject_name')
-    async def help_autocomplete(self, _interaction, current):
+    async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
     @commands.hybrid_command(brief='Manage alias',
-                             description='Add or remove aliases to subjects to make them more accessible')
+                             description='List, add, or remove aliases to subjects to make them more accessible')
     async def alias(self, ctx, options=None, *, subject_name=None):
         if options is None or options.lower() == 'list':
             if subject_name is None:
@@ -126,7 +126,7 @@ class Subject(commands.Cog, name='subject'):
                                                  check=lambda m: m.channel == ctx.channel and
                                                  m.author == ctx.author,
                                                  timeout=20.0)
-                alias_name = msg.content
+                subject_alias = msg.content
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
                 return
@@ -134,10 +134,10 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send('Timeout! Failed to add alias!')
                 return
             try:
-                add_subject_alias(real_subject[0], alias_name)
-                await ctx.send(f'Added {alias_name} to the list of aliases of {real_subject[1]}!')
+                add_subject_alias(real_subject[0], subject_alias)
+                await ctx.send(f'Added {subject_alias} to the list of aliases of {real_subject[1]}!')
             except AttributeError:
-                await ctx.send(f'{alias_name} already exists as an alias to {real_subject[1]}!')
+                await ctx.send(f'{subject_alias} already exists as an alias to {real_subject[1]}!')
             return
         elif options.lower() == 'remove':
             if subject_name is None:
@@ -158,7 +158,7 @@ class Subject(commands.Cog, name='subject'):
                                                  check=lambda m: m.channel == ctx.channel and
                                                  m.author == ctx.author,
                                                  timeout=20.0)
-                alias_name = msg.content
+                subject_alias = msg.content
             except KeyError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
                 return
@@ -166,10 +166,10 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send('Timeout! Failed to add alias!')
                 return
             try:
-                remove_subject_alias(real_subject[0], alias_name)
-                await ctx.send(f'Removed {alias_name} from the list of aliases of {real_subject[1]}!')
+                remove_subject_alias(real_subject[0], subject_alias)
+                await ctx.send(f'Removed {subject_alias} from the list of aliases of {real_subject[1]}!')
             except AttributeError:
-                await ctx.send(f'There is no such alias as {alias_name} in {real_subject[1]}!')
+                await ctx.send(f'There is no such alias as {subject_alias} in {real_subject[1]}!')
             return
         else:
             subject_name = f'{options} {subject_name}'
@@ -182,7 +182,7 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send(f'There is no such subject as {subject_name}!')
 
     @alias.autocomplete('options')
-    async def help_autocomplete(self, _interaction, current):
+    async def alias_options_autocomplete(self, _interaction, current):
         options = ['list', 'add', 'remove']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -402,14 +402,14 @@ class Subject(commands.Cog, name='subject'):
             return
 
     @homework.autocomplete('subject_name')
-    async def help_autocomplete(self, _interaction, current):
+    async def subject_name_with_all_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject]
         options.insert(0, 'all')
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
     @homework.autocomplete('_clear')
-    async def help_autocomplete(self, _interaction, current):
+    async def homework_clear_autocomplete(self, _interaction, current):
         options = ['clear']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -459,7 +459,7 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send(f'You can\'t duplicate homework assignments!')
 
     @add_homework.autocomplete('subject_name')
-    async def help_autocomplete(self, _interaction, current):
+    async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -501,7 +501,7 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send(f'{assignment} doesn\'t exist!')
 
     @remove_homework.autocomplete('subject_name')
-    async def help_autocomplete(self, _interaction, current):
+    async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
