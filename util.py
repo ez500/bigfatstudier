@@ -127,3 +127,19 @@ def clear_subject_homework(subject_name: str) -> None:
             subject[subject_name]['homework'].remove(homework)
         return
     raise KeyError('This subject doesn\'t exist!')
+
+
+def generate_message_listener(message_id: int, emojis: list[str], roles: list[int]):
+    if len(emojis) != len(roles):
+        print('here')
+        raise ValueError('Emojis cannot be listened to with respective roles!')
+    message_generate_default_data(message_id)
+    for emoji, role in zip(emojis, roles):
+        message_listener[message_id]['emoji'].append(emoji)
+        message_listener[message_id]['role'].append(role)
+
+
+def remove_message_listener(message_id: int):
+    if message_id not in message_listener:
+        raise KeyError('This message does not have any listeners!')
+    del message_listener[message_id]

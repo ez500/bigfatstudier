@@ -5,7 +5,8 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from data_config import message_listener, generate_message_listener, remove_message_listener
+from data_config import message_listener
+from util import generate_message_listener, remove_message_listener
 
 
 class MessageReactionListener(commands.Cog, name='message_reaction_listener'):

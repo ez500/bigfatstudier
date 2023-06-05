@@ -54,19 +54,7 @@ def subject_generate_default_data(subject_name: str):
     subject[subject_name.lower()]['real'] = subject_name
 
 
-def generate_message_listener(message_id: int, emojis: list[str], roles: list[int]):
+def message_generate_default_data(message_id: int):
     if message_id not in message_listener:
         message_listener[message_id] = {}
     _generate_default_data(message_listener[message_id], MESSAGE_DATA)
-    if len(emojis) != len(roles):
-        print('here')
-        raise ValueError('Emojis cannot be listened to with respective roles!')
-    for emoji, role in zip(emojis, roles):
-        message_listener[message_id]['emoji'].append(emoji)
-        message_listener[message_id]['role'].append(role)
-
-
-def remove_message_listener(message_id: int):
-    if message_id not in message_listener:
-        raise KeyError('This message does not have any listeners!')
-    del message_listener[message_id]
