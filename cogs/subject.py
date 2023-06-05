@@ -434,7 +434,7 @@ class Subject(commands.Cog, name='subject'):
                                               m.author == ctx.author,
                                               timeout=40.0)
             assignment = msg1.content
-            await ctx.send('What is the due date of this homework assignment? (mm/dd/yyyy)')  # TODO: CHECK IF PAST
+            await ctx.send('What is the due date of this homework assignment? (mm/dd/yyyy)')
             msg2 = await self.client.wait_for('message',
                                               check=lambda m: m.channel == ctx.channel and
                                               m.author == ctx.author,
