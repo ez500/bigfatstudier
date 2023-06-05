@@ -13,16 +13,16 @@ class Subject(commands.Cog, name='subject'):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    # TODO: ADD DAILY REMINDERS
-    @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
-    async def subjects(self, ctx, options=None, *, subject_name=None):  # lists/add/remove subject, list description
+    # TODO: ADD DAILY PERSONALIZED REMINDERS
+    @commands.hybrid_command(brief='Manage subjects', description='List, add, or remove subjects')
+    async def subjects(self, ctx, options=None, *, subject_name=None):
         if options is None or options.lower() == 'list':
             if subject_name is None:
-                if repr(subject) == '{}':
+                if repr(subject_data) == '{}':
                     await ctx.send('There are yet to be subjects to be added!')
                     return
                 subject_list = '**Subjects:** '
-                for name in subject:
+                for name in subject_data:
                     subject_list += get_real_subject(name)[1] + ', '
                 subject_list = subject_list[0:-2]
                 await ctx.send(subject_list)
@@ -86,12 +86,12 @@ class Subject(commands.Cog, name='subject'):
 
     @subjects.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
     @commands.hybrid_command(brief='Manage alias',
-                             description='List, add, or remove aliases to subjects to make them more accessible')
+                             description='List, add, or remove aliases to subjects for more accessibility')
     async def alias(self, ctx, options=None, *, subject_name=None):
         if options is None or options.lower() == 'list':
             if subject_name is None:
@@ -187,7 +187,7 @@ class Subject(commands.Cog, name='subject'):
 
     @alias.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -278,12 +278,12 @@ class Subject(commands.Cog, name='subject'):
 
     @description.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @commands.hybrid_command(brief='Need homework reminders?',
-                             description='Know the homework that you have to do for each class')
+    @commands.hybrid_command(brief='View homework assignments',
+                             description='View or clear homework for each class')
     async def homework(self, ctx, *, subject_name=None, _clear=None):
         if subject_name is None:
             if _clear is None:
@@ -311,12 +311,12 @@ class Subject(commands.Cog, name='subject'):
                     return
         elif subject_name.lower() == 'all':
             if _clear is None:
-                if repr(subject) == '{}':
+                if repr(subject_data) == '{}':
                     await ctx.send('No subjects to check homework for!')
                     return
                 message = '# Homework for all subjects:\n'
-                for name in subject:
-                    if repr(subject[name]['homework']) == '[]':
+                for name in subject_data:
+                    if repr(subject_data[name]['homework']) == '[]':
                         message += f'**{get_real_subject(name)[1]}** has no homework.\n'
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_homework(name)) + '\n'
@@ -370,7 +370,7 @@ class Subject(commands.Cog, name='subject'):
                 return
             try:
                 real_subject = get_real_subject(subject_name)
-                if len(subject[real_subject[0]]['homework']) == 0:
+                if len(subject_data[real_subject[0]]['homework']) == 0:
                     await ctx.send(f'There doesn\'t seem to be any homework for {real_subject[1]}.')
                     return
                 await ctx.send(f'Homework for **{real_subject[1]}**:\n' +
@@ -401,7 +401,7 @@ class Subject(commands.Cog, name='subject'):
 
     @homework.autocomplete('subject_name')
     async def subject_name_with_all_autocomplete(self, _interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         options.insert(0, 'all')
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -412,7 +412,7 @@ class Subject(commands.Cog, name='subject'):
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @commands.hybrid_command(brief='Set subject homework', description='Set homework for a subject')
+    @commands.hybrid_command(brief='Add subject homework', description='Add an assignment to a subject')
     async def add_homework(self, ctx, *, subject_name=None):
         if subject_name is None:
             try:
@@ -470,11 +470,11 @@ class Subject(commands.Cog, name='subject'):
 
     @add_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @commands.hybrid_command(brief='Remove subject homework', description='Remove homework from a subject')
+    @commands.hybrid_command(brief='Remove subject homework', description='Remove an assignment from a subject')
     async def remove_homework(self, ctx, *, subject_name=None):
         if subject_name is None:
             try:
@@ -512,7 +512,7 @@ class Subject(commands.Cog, name='subject'):
 
     @remove_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject]
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 

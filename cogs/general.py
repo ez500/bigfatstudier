@@ -3,7 +3,7 @@
 import discord
 from discord.ext import commands
 
-from data_config import subject, save_all
+from data_config import subject_data, save_all
 
 
 class General(commands.Cog, name='general'):
@@ -17,8 +17,8 @@ class General(commands.Cog, name='general'):
     @commands.hybrid_command(brief='List of commands', description='Need help? Call this command!')
     async def help(self, ctx, options=None):
         all_subjects = ''
-        for subject_name in subject:
-            all_subjects += subject[subject_name]['real'] + ', '
+        for subject_name in subject_data:
+            all_subjects += subject_data[subject_name]['real'] + ', '
         all_subjects = all_subjects[0:-2]
         if options is None:
             embed = discord.Embed(color=0x255FAB, title='bigfatstudier Bot Commands',

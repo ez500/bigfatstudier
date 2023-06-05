@@ -25,14 +25,14 @@ MESSAGE_DATA = {'emoji': [],
                 'role': [], }
 
 with open('./data/subject_data', 'r') as f:
-    subject = ast.literal_eval(f.read())
+    subject_data = ast.literal_eval(f.read())
 with open('./data/message_data', 'r', encoding='utf-8') as f:
     message_listener = ast.literal_eval(f.read())
 
 
 def save_all() -> None:
     with open('./data/subject_data', 'w') as file:
-        file.write(repr(subject))
+        file.write(repr(subject_data))
     with open('./data/message_data', 'w', encoding='utf-8') as file:
         file.write(repr(message_listener))
 
@@ -48,10 +48,10 @@ def _generate_default_data(data: dict, default: dict):
 
 
 def subject_generate_default_data(subject_name: str):
-    if subject_name.lower() not in subject:
-        subject[subject_name.lower()] = {}
-    _generate_default_data(subject[subject_name.lower()], SUBJECT_DATA)
-    subject[subject_name.lower()]['real'] = subject_name
+    if subject_name.lower() not in subject_data:
+        subject_data[subject_name.lower()] = {}
+    _generate_default_data(subject_data[subject_name.lower()], SUBJECT_DATA)
+    subject_data[subject_name.lower()]['real'] = subject_name
 
 
 def message_generate_default_data(message_id: int):
