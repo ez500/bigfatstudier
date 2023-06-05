@@ -462,7 +462,7 @@ class Subject(commands.Cog, name='subject'):
             return
         try:
             add_subject_homework(real_subject[0], assignment, due_date)
-            await ctx.send(f'Successfully set the homework of {real_subject[1]} to {assignment} '
+            await ctx.send(f'Successfully added {assignment} to {real_subject[1]} '
                            f'due {due_date}')
         except KeyError:
             await ctx.send(f'There is no such subject as {subject_name}!')

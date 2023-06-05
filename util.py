@@ -115,6 +115,7 @@ def remove_subject_homework(subject_name: str, assignment: str) -> None:
         for homework in subject[subject_name]['homework']:
             if assignment.lower() == homework['description']:
                 subject[subject_name]['homework'].remove(homework)
+                return
         raise AttributeError('This assignment doesn\'t exist!')
     raise KeyError('This subject doesn\'t exist!')
 
