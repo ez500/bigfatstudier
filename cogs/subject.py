@@ -14,7 +14,6 @@ class Subject(commands.Cog, name='subject'):
         self.client = client
 
     # TODO: ADD DAILY REMINDERS
-    # TODO: DESCRIPTION
     # TODO: UPDATE EVERYTHING WITH SUBJECT ALIASES
     @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
     async def subjects(self, ctx, options=None, *, subject_name=None):  # lists/add/remove subject, list description
@@ -356,11 +355,11 @@ class Subject(commands.Cog, name='subject'):
                     real_subject = get_real_subject(subject_name)
                     await ctx.send(f'Are you sure you want to clear the homework for '
                                    f'{real_subject[1]}?')
-                    msg = await self.client.wait_for('message',
-                                                     check=lambda m: m.channel == ctx.channel and
-                                                     m.author == ctx.author,
-                                                     timeout=20.0)
-                    if msg.content.lower() == 'yes':
+                    confirm = await self.client.wait_for('message',
+                                                         check=lambda m: m.channel == ctx.channel and
+                                                         m.author == ctx.author,
+                                                         timeout=20.0)
+                    if confirm.content.lower() == 'yes':
                         clear_subject_homework(real_subject[0])
                         await ctx.send(f'Cleared homework for {real_subject[1]}')
                     else:
@@ -383,11 +382,11 @@ class Subject(commands.Cog, name='subject'):
             try:
                 real_subject = get_real_subject(subject_name)
                 await ctx.send(f'Are you sure you want to clear the homework for {real_subject[1]}?')
-                msg = await self.client.wait_for('message',
-                                                 check=lambda m: m.channel == ctx.channel and
-                                                 m.author == ctx.author,
-                                                 timeout=20.0)
-                if msg.content.lower() == 'yes':
+                confirm = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                if confirm.content.lower() == 'yes':
                     clear_subject_homework(real_subject[0])
                     await ctx.send(f'Cleared homework for {real_subject[1]}')
                 else:
@@ -445,9 +444,21 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send('Timeout! Failed to add homework!')
             return
         try:
-            datetime.datetime.strptime(due_date, '%m/%d/%Y')
+            date = datetime.datetime.strptime(due_date, '%m/%d/%Y')
+            if date < datetime.datetime.now():
+                await ctx.send('This due date is before today. Add the assignment anyway?')
+                confirm = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                if confirm.content.lower() != 'yes':
+                    await ctx.send('Confirmation failed! Failed to add homework!')
+                    return
         except ValueError:
             await ctx.send('Not a valid date in the specified format!')
+            return
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to add homework!')
             return
         try:
             add_subject_homework(real_subject[0], assignment, due_date)
