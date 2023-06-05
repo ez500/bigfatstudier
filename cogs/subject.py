@@ -14,7 +14,6 @@ class Subject(commands.Cog, name='subject'):
         self.client = client
 
     # TODO: ADD DAILY REMINDERS
-    # TODO: UPDATE EVERYTHING WITH SUBJECT ALIASES
     @commands.hybrid_command(brief='List of subjects', description='Know what subjects this bot manages homework for')
     async def subjects(self, ctx, options=None, *, subject_name=None):  # lists/add/remove subject, list description
         if options is None or options.lower() == 'list':

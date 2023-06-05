@@ -1,4 +1,5 @@
 """Utilities"""
+import traceback
 
 import data_config
 from data_config import *
@@ -8,6 +9,9 @@ def get_real_subject(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject:
         return [subject_name, subject[subject_name]['real']]
+    for name in subject:
+        if subject_name in subject[name]['alias']:
+            return [name, subject[name]['real']]
     raise KeyError('This subject doesn\'t exist!')
 
 
