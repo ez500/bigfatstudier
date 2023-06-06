@@ -12,7 +12,7 @@ from constants import *
 from data_config import *
 
 
-def termination_handler(_signal, _frame):
+def termination_handler(_signal, _frame):  # TODO: ADD EXCEPTION HANDLER
     print('Termination signal detected!')
     save_all()
     sys.exit(0)

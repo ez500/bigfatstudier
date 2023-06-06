@@ -204,7 +204,7 @@ class Subject(commands.Cog, name='subject'):
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
-                    await ctx.send('Timeout! Failed to retrieve aliases!')
+                    await ctx.send('Timeout! Failed to retrieve description!')
                     return
         elif options.lower() == 'set':
             if subject_name is None:
@@ -311,7 +311,7 @@ class Subject(commands.Cog, name='subject'):
                     return
         elif subject_name.lower() == 'all':
             if _clear is None:
-                if repr(subject_data) == '{}':
+                if len(subject_data) == 0:
                     await ctx.send('No subjects to check homework for!')
                     return
                 message = '# Homework for all subjects:\n'
@@ -321,9 +321,6 @@ class Subject(commands.Cog, name='subject'):
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_homework(name)) + '\n'
                 message = message[0:-1]
-                if message == 'Homework for all subjects:':
-                    await ctx.send('There doesn\'t seem to be any homework for any subject.')
-                    return
                 await ctx.send(message)
                 return
             if _clear.lower() == 'clear':
@@ -350,33 +347,17 @@ class Subject(commands.Cog, name='subject'):
                 if subject_name.lower() == 'all':
                     await ctx.send('Sorry, but you cannot clear homework for all subjects.')
                     return
+                _clear = 'clear'
+            else:
                 try:
                     real_subject = get_real_subject(subject_name)
-                    await ctx.send(f'Are you sure you want to clear the homework for '
-                                   f'{real_subject[1]}?')
-                    confirm = await self.client.wait_for('message',
-                                                         check=lambda m: m.channel == ctx.channel and
-                                                         m.author == ctx.author,
-                                                         timeout=20.0)
-                    if confirm.content.lower() == 'yes':
-                        clear_subject_homework(real_subject[0])
-                        await ctx.send(f'Cleared homework for {real_subject[1]}')
-                    else:
-                        await ctx.send('Confirmation failed')
-                except asyncio.TimeoutError:
-                    await ctx.send('Timeout! Confirmation failed')
+                    if len(subject_data[real_subject[0]]['homework']) == 0:
+                        await ctx.send(f'There doesn\'t seem to be any homework for {real_subject[1]}.')
+                        return
+                    await ctx.send(f'Homework for **{real_subject[1]}**:\n' +
+                                   '\n'.join(get_subject_homework(real_subject[0])))
                 except KeyError:
                     await ctx.send(f'There is no such subject as {subject_name}!')
-                return
-            try:
-                real_subject = get_real_subject(subject_name)
-                if len(subject_data[real_subject[0]]['homework']) == 0:
-                    await ctx.send(f'There doesn\'t seem to be any homework for {real_subject[1]}.')
-                    return
-                await ctx.send(f'Homework for **{real_subject[1]}**:\n' +
-                               '\n'.join(get_subject_homework(real_subject[0])))
-            except KeyError:
-                await ctx.send(f'There is no such subject as {subject_name}!')
         if _clear.lower() == 'clear':
             try:
                 real_subject = get_real_subject(subject_name)

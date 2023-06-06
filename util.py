@@ -1,7 +1,5 @@
 """Utilities"""
-import traceback
 
-import data_config
 from data_config import *
 
 
@@ -15,13 +13,14 @@ def get_real_subject(subject_name: str) -> list[str]:
     raise KeyError('This subject doesn\'t exist!')
 
 
-def add_subject(subject_name: str) -> None:
+def add_subject(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split())
     if subject_name.lower() == 'all':
         raise AttributeError('You can\'t add an \'all\' subject!')
     if subject_name.lower() in subject_data:
         raise KeyError('This subject already exists!')
-    data_config.subject_generate_default_data(subject_name)
+    subject_generate_default_data(subject_name, owner)
+    return get_real_subject(subject_name)
 
 
 def remove_subject(subject_name: str) -> None:
@@ -105,9 +104,9 @@ def add_subject_homework(subject_name: str, assignment: str, due_date: str) -> N
         for homework in subject_data[subject_name]['homework']:
             if assignment.lower() == homework['description']:
                 raise AttributeError(f'{assignment} already exists in this subject!')
-        subject_data[subject_name]['homework'].append(data_config.Work(name=assignment,
-                                                                       description=assignment.lower(),
-                                                                       due_date=due_date).to_dict())
+        subject_data[subject_name]['homework'].append(Work(name=assignment,
+                                                           description=assignment.lower(),
+                                                           due_date=due_date).to_dict())
         return
     raise KeyError('This subject doesn\'t exist!')
 
