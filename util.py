@@ -13,7 +13,7 @@ def get_real_subject(subject_name: str) -> list[str]:
     raise KeyError('This subject doesn\'t exist!')
 
 
-def add_subject(subject_name: str) -> list[str]:
+def add_subject(subject_name: str, owner: int) -> list[str]:
     subject_name = ' '.join(subject_name.split())
     if subject_name.lower() == 'all':
         raise AttributeError('You can\'t add an \'all\' subject!')
@@ -26,6 +26,8 @@ def add_subject(subject_name: str) -> list[str]:
 def remove_subject(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
+        remove_all_users_subject(subject_name)
+        remove_all_admins_subject(subject_name)
         del subject_data[subject_name]
         return
     raise KeyError('This subject doesn\'t exist!')
@@ -146,3 +148,83 @@ def remove_message_listener(message_id: int):
     if message_id not in message_listener:
         raise KeyError('This message does not have any listeners!')
     del message_listener[message_id]
+
+
+def get_user_subjects(user_id: int) -> list[str]:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    return user_data[user_id]['classes']
+
+
+def get_admin_subjects(user_id: int) -> list[str]:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    return user_data[user_id]['admin']
+
+
+def add_user_subject(user_id: int, subject_name: str) -> None:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    if subject_name in subject_data:
+        user_data[user_id]['classes'].append(subject_name)
+        subject_data[subject_name]['students'].append(user_id)
+        return
+    raise KeyError('This subject doesn\'t exist!')
+
+
+def remove_user_subject(user_id: int, subject_name: str) -> None:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    elif subject_name in user_data[user_id]['classes']:
+        user_data[user_id]['classes'].remove(subject_name)
+        subject_data[subject_name]['students'].remove(user_id)
+        return
+    raise KeyError('This subject isn\'t in the user\'s list of subjects!')
+
+
+def remove_all_users_subject(subject_name: str) -> None:
+    for user_id in user_data:
+        if subject_name in user_data[user_id]['classes']:
+            user_data[user_id]['classes'].remove(subject_name)
+
+
+def add_admin_subject(user_id: int, subject_name: str) -> None:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    if subject_name in subject_data:
+        user_data[user_id]['admin'].append(subject_name)
+        subject_data[subject_name]['admin'].append(user_id)
+        return
+    raise KeyError('This subject doesn\'t exist!')
+
+
+def remove_admin_subject(user_id: int, subject_name: str) -> None:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    elif subject_name in user_data[user_id]['admin']:
+        user_data[user_id]['admin'].remove(subject_name)
+        subject_data[subject_name]['admin'].remove(user_id)
+        return
+    raise KeyError('This user isn\'t an admin of this subject!')
+
+
+def remove_all_admins_subject(subject_name: str) -> None:
+    for user_id in user_data:
+        if subject_name in user_data[user_id]['admin']:
+            user_data[user_id]['admin'].remove(subject_name)
+
+
+def is_subscribed(user_id: int, subject_name: str) -> bool:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    elif subject_name in get_user_subjects(user_id):
+        return True
+    return False
+
+
+def is_admin(user_id: int, subject_name: str) -> bool:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    elif subject_name in get_admin_subjects(user_id):
+        return True
+    return False
