@@ -15,6 +15,10 @@ class MessageAttributeError(Exception):
     pass
 class UserError(Exception):
     pass
+class UserAdminError(Exception):
+    pass
+class UserOwnerError(Exception):
+    pass
 
 
 def get_real_subject(subject_name: str) -> list[str]:
@@ -192,6 +196,8 @@ def remove_user_subject(user_id: int, subject_name: str) -> None:
     if user_id not in user_data:
         user_generate_default_data(user_id)
     elif subject_name in user_data[user_id]['classes']:
+        if is_owner(user_id, subject_name):
+            raise UserOwnerError('The owner of this subject cannot unsubscribe!')
         user_data[user_id]['classes'].remove(subject_name)
         subject_data[subject_name]['students'].remove(user_id)
         return
@@ -219,7 +225,9 @@ def add_admin_subject(user_id: int, subject_name: str) -> None:
 def remove_admin_subject(user_id: int, subject_name: str) -> None:
     if user_id not in user_data:
         user_generate_default_data(user_id)
-    elif subject_name in user_data[user_id]['admin']:
+    elif is_admin(user_id, subject_name):
+        if is_owner(user_id, subject_name):
+            raise UserOwnerError('The owner of this subject has to be an admin!')  # TODO: SELF REMOVE ADMIN EXCEPTION
         user_data[user_id]['admin'].remove(subject_name)
         subject_data[subject_name]['admin'].remove(user_id)
         return
@@ -244,5 +252,13 @@ def is_admin(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
     elif subject_name in get_admin_subjects(user_id):
+        return True
+    return False
+
+
+def is_owner(user_id: int, subject_name: str) -> bool:
+    if user_id not in user_data:
+        user_generate_default_data(user_id)
+    elif user_data[user_id]['owner'] == subject_name:
         return True
     return False

@@ -14,7 +14,7 @@ class Subject(commands.Cog, name='subject'):
         self.client = client
 
     # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
-    # TODO: USER SUBSCRIPTION, ADMIN COMMANDS
+    # TODO: USER ADMIN COMMANDS
     # TODO: PROJECT, TEST COMMANDS
     @commands.hybrid_command(brief='Manage subjects', description='List, add, or remove subjects')
     async def subjects(self, ctx, options=None, *, subject_name=None):
@@ -64,11 +64,11 @@ class Subject(commands.Cog, name='subject'):
                     return
             try:
                 real_subject = get_real_subject(subject_name)
-                try:
+                if is_owner(ctx.author.id, real_subject[0]):
                     remove_subject(real_subject[0])
                     await ctx.send(f'The subject {real_subject[1]} has been successfully removed')
-                except UserError:
-                    await ctx.send(f'You must be an admin of {real_subject[1]} to delete it!')
+                    return
+                await ctx.send(f'You must be an admin of {real_subject[1]} to delete it!')
             except SubjectError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
             return
@@ -302,6 +302,74 @@ class Subject(commands.Cog, name='subject'):
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
+    @commands.hybrid_command(brief='Subscribe to subjects',
+                             description='Subscribe to subjects to receive their reminders')
+    async def subscribe(self, ctx, *, subject_name=None):
+        if subject_name is None:
+            try:
+                await ctx.send('What subject to subscribe to?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to subscribe!')
+                return
+        try:
+            real_subject = get_real_subject(subject_name)
+        except SubjectError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+            return
+        try:
+            add_user_subject(ctx.author.id, real_subject[0])
+        except UserError:
+            await ctx.send(f'You are already subscribed to {real_subject[1]}!')
+            return
+        await ctx.send(f'Subscribed to {real_subject[1]}!')
+
+    @subscribe.autocomplete('subject_name')
+    async def subscription_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Unsubscribe to subjects',
+                             description='Unsubscribe to subjects to stop receiving their reminders')
+    async def unsubscribe(self, ctx, *, subject_name=None):
+        if subject_name is None:
+            try:
+                await ctx.send('What subject to unsubscribe from?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to unsubscribe!')
+                return
+        try:
+            real_subject = get_real_subject(subject_name)
+        except SubjectError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+            return
+        try:
+            remove_user_subject(ctx.author.id, real_subject[0])
+            await ctx.send(f'Unsubscribed from {real_subject[1]}!')
+        except UserOwnerError:
+            await ctx.send(f'The owner cannot unsubscribe from {real_subject[1]}!')
+            return
+        except UserError:
+            await ctx.send(f'You are not subscribed to {real_subject[1]}!')
+            return
+
+    @unsubscribe.autocomplete('subject_name')
+    async def unsubscription_autocomplete(self, interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data
+                   if subject_name in get_user_subjects(interaction.user.id)]
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
     @commands.hybrid_command(brief='View homework assignments',
                              description='View or clear homework for each class')
     async def homework(self, ctx, *, subject_name=None, _clear=None):
@@ -354,7 +422,7 @@ class Subject(commands.Cog, name='subject'):
                 if len(get_user_subjects(ctx.author.id)) == 0:
                     await ctx.send('You are not subscribed to any subjects!')
                     return
-                message = '# Homework for subscribed subjects:\n'
+                message = '# Homework for your subscribed subjects:\n'
                 for name in get_user_subjects(ctx.author.id):
                     if repr(subject_data[name]['homework']) == '[]':
                         message += f'**{get_real_subject(name)[1]}** has no homework.\n'
