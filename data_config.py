@@ -65,7 +65,7 @@ def subject_generate_default_data(subject_name: str, owner: int):
     subject_data[subject_name.lower()]['real'] = subject_name
     subject_data[subject_name.lower()]['owner'] = owner
     subject_data[subject_name.lower()]['admin'].append(owner)
-    subject_data[subject_name.lower()]['student'].append(owner)
+    subject_data[subject_name.lower()]['students'].append(owner)
 
 
 def message_generate_default_data(message_id: int):

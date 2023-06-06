@@ -13,11 +13,9 @@ class Subject(commands.Cog, name='subject'):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    # TODO: IMPLEMENT INDIVIDUAL-ASSIGNMENT REMINDERS
-    # TODO: IMPLEMENT DAILY PERSONALIZED REMINDERS
-    # TODO: IMPLEMENT USER SUBSCRIBED SUBJECTS
-    # TODO: ADD SUBJECT ADMINS + ADMIN COMMAND
-    # TODO: ADD PROJECTS, TESTS
+    # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
+    # TODO: USER SUBSCRIPTION, ADMIN COMMANDS
+    # TODO: PROJECT, TEST COMMANDS
     @commands.hybrid_command(brief='Manage subjects', description='List, add, or remove subjects')
     async def subjects(self, ctx, options=None, *, subject_name=None):
         if options is None or options.lower() == 'list':
@@ -46,10 +44,10 @@ class Subject(commands.Cog, name='subject'):
             try:
                 real_subject = add_subject(subject_name, ctx.author.id)
                 await ctx.send(f'Successfully added {real_subject[1]} to the subject list!')
-            except KeyError:
+            except SubjectError:
                 real_subject = get_real_subject(subject_name)
                 await ctx.send(f'{real_subject[1]} already exists!')
-            except AttributeError:
+            except SubjectNameError:
                 await ctx.send('You can\'t add an \'all\' subject!')
             return
         elif options.lower() == 'remove':
@@ -66,12 +64,12 @@ class Subject(commands.Cog, name='subject'):
                     return
             try:
                 real_subject = get_real_subject(subject_name)
-                if is_admin(ctx.author.id, subject_name):
+                try:
                     remove_subject(real_subject[0])
                     await ctx.send(f'The subject {real_subject[1]} has been successfully removed')
-                    return
-                await ctx.send(f'You must be an admin of {real_subject[1]} to delete it!')
-            except KeyError:
+                except UserError:
+                    await ctx.send(f'You must be an admin of {real_subject[1]} to delete it!')
+            except SubjectError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
             return
         else:
@@ -85,7 +83,7 @@ class Subject(commands.Cog, name='subject'):
                            f'''{'You are subscribed to this class!'
                            if is_subscribed(ctx.author.it, real_subject[0])
                            else 'You are not subscribed to this class!'}''')
-        except KeyError:
+        except SubjectError:
             await ctx.send(f'There is no such subject as {subject_name}!')
 
     @subjects.autocomplete('options')
@@ -138,7 +136,7 @@ class Subject(commands.Cog, name='subject'):
                                                  m.author == ctx.author,
                                                  timeout=20.0)
                 subject_alias = msg.content
-            except KeyError:
+            except SubjectError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
                 return
             except asyncio.TimeoutError:
@@ -147,7 +145,7 @@ class Subject(commands.Cog, name='subject'):
             try:
                 add_subject_alias(real_subject[0], subject_alias)
                 await ctx.send(f'Added {subject_alias} to the list of aliases of {real_subject[1]}!')
-            except AttributeError:
+            except SubjectAttributeError:
                 await ctx.send(f'{subject_alias} already exists as an alias to {real_subject[1]}!')
             return
         elif options.lower() == 'remove':
@@ -173,7 +171,7 @@ class Subject(commands.Cog, name='subject'):
                                                  m.author == ctx.author,
                                                  timeout=20.0)
                 subject_alias = msg.content
-            except KeyError:
+            except SubjectError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
                 return
             except asyncio.TimeoutError:
@@ -182,7 +180,7 @@ class Subject(commands.Cog, name='subject'):
             try:
                 remove_subject_alias(real_subject[0], subject_alias)
                 await ctx.send(f'Removed {subject_alias} from the list of aliases of {real_subject[1]}!')
-            except AttributeError:
+            except SubjectAttributeError:
                 await ctx.send(f'There is no such alias as {subject_alias} in {real_subject[1]}!')
             return
         else:
@@ -192,7 +190,7 @@ class Subject(commands.Cog, name='subject'):
             aliases = ', '.join(get_subject_alias(real_subject[0]))
             await ctx.send(f'''Aliases of {real_subject[1]}: {aliases if len(aliases) > 0 else 'No aliases'}''')
             return
-        except KeyError:
+        except SubjectError:
             await ctx.send(f'There is no such subject as {subject_name}!')
 
     @alias.autocomplete('options')
@@ -245,7 +243,7 @@ class Subject(commands.Cog, name='subject'):
                                                  m.author == ctx.author,
                                                  timeout=20.0)
                 subject_description = msg.content
-            except KeyError:
+            except SubjectError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
                 return
             except asyncio.TimeoutError:
@@ -254,7 +252,7 @@ class Subject(commands.Cog, name='subject'):
             try:
                 set_subject_description(real_subject[0], subject_description)
                 await ctx.send(f'Set description of {real_subject[1]} to *{subject_description}*!')
-            except AttributeError:
+            except SubjectAttributeError:
                 await ctx.send(f'{subject_description} is already the description of {real_subject[1]}!')
             return
         elif options.lower() == 'clear':
@@ -274,13 +272,13 @@ class Subject(commands.Cog, name='subject'):
                 if not is_subscribed(ctx.author.id, real_subject[0]):
                     await ctx.send(f'You must be subscribed to {real_subject[1]} to clear its description!')
                     return
-            except KeyError:
+            except SubjectError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
                 return
             try:
                 set_subject_description(real_subject[0], 'No description')
                 await ctx.send(f'Cleared description of {real_subject[1]}!')
-            except AttributeError:
+            except SubjectAttributeError:
                 await ctx.send(f'{real_subject[1]} has no description to clear!')
             return
         else:
@@ -289,7 +287,7 @@ class Subject(commands.Cog, name='subject'):
             real_subject = get_real_subject(subject_name)
             await ctx.send(f'**{real_subject[1]} description:** {get_subject_description(real_subject[0])}')
             return
-        except KeyError:
+        except SubjectError:
             await ctx.send(f'There is no such subject as {subject_name}!')
 
     @description.autocomplete('options')
@@ -398,7 +396,7 @@ class Subject(commands.Cog, name='subject'):
                         return
                     await ctx.send(f'Homework for **{real_subject[1]}**:\n' +
                                    '\n'.join(get_subject_homework(real_subject[0])))
-                except KeyError:
+                except SubjectError:
                     await ctx.send(f'There is no such subject as {subject_name}!')
         if _clear.lower() == 'clear':
             try:
@@ -418,7 +416,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('Confirmation failed')
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Confirmation failed')
-            except KeyError:
+            except SubjectError:
                 await ctx.send(f'There is no such subject as {subject_name}!')
             return
         else:
@@ -492,9 +490,9 @@ class Subject(commands.Cog, name='subject'):
             add_subject_homework(real_subject[0], assignment, due_date)
             await ctx.send(f'Successfully added {assignment} to {real_subject[1]} '
                            f'due {due_date}')
-        except KeyError:
+        except SubjectError:
             await ctx.send(f'There is no such subject as {subject_name}!')
-        except AttributeError:
+        except SubjectAttributeError:
             await ctx.send(f'You can\'t duplicate homework assignments!')
 
     @add_homework.autocomplete('subject_name')
@@ -537,9 +535,9 @@ class Subject(commands.Cog, name='subject'):
         try:
             remove_subject_homework(real_subject[0], assignment)
             await ctx.send(f'''Successfully removed homework '{assignment}' from {real_subject[1]}''')
-        except KeyError:
+        except SubjectError:
             await ctx.send(f'There is no such subject as {subject_name}!')
-        except AttributeError:
+        except SubjectAttributeError:
             await ctx.send(f'{assignment} doesn\'t exist!')
 
     @remove_homework.autocomplete('subject_name')
