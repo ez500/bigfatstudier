@@ -15,6 +15,7 @@ class Subject(commands.Cog, name='subject'):
 
     # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
     # TODO: PROJECT, TEST COMMANDS
+    # TODO: IMPLEMENT DIRECT EXCEPTION MESSAGES
     @commands.hybrid_command(brief='Manage subjects', description='List, add, or remove subjects')
     async def subjects(self, ctx, options=None, *, subject_name=None):
         if options is None or options.lower() == 'list':
@@ -48,6 +49,8 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'{real_subject[1]} already exists!')
             except SubjectNameError:
                 await ctx.send('You can\'t add an \'all\' subject!')
+            except SubjectAttributeError:
+                await ctx.send(repr(SubjectAttributeError))
             return
         elif options.lower() == 'remove':
             if subject_name is None:

@@ -37,6 +37,9 @@ def add_subject(subject_name: str, owner: int) -> list[str]:
         raise SubjectNameError('You can\'t add an \'all\' subject!')
     if subject_name.lower() in subject_data:
         raise SubjectError('This subject already exists!')
+    for subject in subject_data:
+        if subject_name.lower() in subject_data[subject]['alias']:
+            raise SubjectAttributeError(f'{subject_name} already exists as an alias to {get_real_subject(subject)[1]}!')
     subject_generate_default_data(subject_name, owner)
     return get_real_subject(subject_name)
 
