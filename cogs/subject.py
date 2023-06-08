@@ -14,7 +14,6 @@ class Subject(commands.Cog, name='subject'):
         self.client = client
 
     # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
-    # TODO: USER ADMIN COMMANDS
     # TODO: PROJECT, TEST COMMANDS
     @commands.hybrid_command(brief='Manage subjects', description='List, add, or remove subjects')
     async def subjects(self, ctx, options=None, *, subject_name=None):
@@ -357,16 +356,134 @@ class Subject(commands.Cog, name='subject'):
             remove_user_subject(ctx.author.id, real_subject[0])
             await ctx.send(f'Unsubscribed from {real_subject[1]}!')
         except UserOwnerError:
-            await ctx.send(f'The owner cannot unsubscribe from {real_subject[1]}!')
+            await ctx.send(f'The owner of {real_subject[1]} cannot unsubscribe!')
             return
         except UserError:
-            await ctx.send(f'You are not subscribed to {real_subject[1]}!')
+            await ctx.send(f'You are already not subscribed to {real_subject[1]}!')
             return
 
     @unsubscribe.autocomplete('subject_name')
     async def unsubscription_autocomplete(self, interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data
                    if subject_name in get_user_subjects(interaction.user.id)]
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Manage admin',
+                             description='View, add, or remove admins of the subject you created/own')
+    async def admin(self, ctx, options=None, *, subject_name=None):
+        if options is None or options.lower() == 'list':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to check admins?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to retrieve admins!')
+                    return
+        elif options.lower() == 'add':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to add admin?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to add admin!')
+                    return
+            try:
+                real_subject = get_real_subject(subject_name)
+            except SubjectError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
+                return
+            if subject_data[real_subject[0]]['owner'] != ctx.author.id:
+                await ctx.send(f'Only the owner of {real_subject[1]} can add admins to it!')
+                return
+            if len(subject_data[real_subject[0]]['admins']) == 10:
+                await ctx.send(f'Subjects can only have up to 10 admins!')
+                return
+            try:
+                await ctx.send('Who to add as admin? (Use their ping tag)')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
+                                                 timeout=20.0)
+                user_mention = msg.content
+                user_id = int(user_mention[2:-1])
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to add admin!')
+                return
+            try:
+                add_admin_subject(user_id, real_subject[0])
+                await ctx.send(f'Added {user_mention} as admin of {real_subject[1]}!')
+            except UserError:
+                await ctx.send(f'{user_mention} is already an admin of {real_subject[1]}!')
+            return
+        elif options.lower() == 'remove':
+            if subject_name is None:
+                try:
+                    await ctx.send('What subject to remove admin?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to remove admin!')
+                    return
+            try:
+                real_subject = get_real_subject(subject_name)
+            except SubjectError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
+                return
+            if subject_data[real_subject[0]]['owner'] != ctx.author.id:
+                await ctx.send(f'Only the owner of {real_subject[1]} can remove admins from it!')
+                return
+            try:
+                await ctx.send('Who to remove as admin? (Use their ping tag)')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
+                                                 timeout=20.0)
+                user_mention = msg.content
+                user_id = int(user_mention[2:-1])
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to remove admin!')
+                return
+            try:
+                remove_admin_subject(user_id, real_subject[0])
+                await ctx.send(f'Removed {user_mention} as admin of {real_subject[1]}!')
+            except UserError:
+                await ctx.send(f'{user_mention} is not an admin of {real_subject[1]}!')
+            except UserOwnerError:
+                await ctx.send(f'The owner cannot be removed as admin of {real_subject[1]}!')
+            return
+        else:
+            subject_name = f'{options} {subject_name}'
+        try:
+            real_subject = get_real_subject(subject_name)
+        except SubjectError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+            return
+        message = f'Admins of {real_subject[1]}: '
+        for admin in subject_data[real_subject[0]]['admins']:
+            message += f'{await self.client.fetch_user(admin)}, '
+        message = message[:-2]
+        await ctx.send(message)
+        return
+
+    @admin.autocomplete('options')
+    async def admin_options_autocomplete(self, _interaction, current):
+        options = ['list', 'add', 'remove']
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @admin.autocomplete('subject_name')
+    async def subject_name_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject)[1] for subject in subject_data]
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
