@@ -94,6 +94,8 @@ class Subject(commands.Cog, name='subject'):
     @subjects.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -201,6 +203,8 @@ class Subject(commands.Cog, name='subject'):
     @alias.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -298,6 +302,8 @@ class Subject(commands.Cog, name='subject'):
     @description.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -329,7 +335,9 @@ class Subject(commands.Cog, name='subject'):
 
     @subscribe.autocomplete('subject_name')
     async def subscription_autocomplete(self, _interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        options = [get_real_subject(subject)[1] for subject in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -364,8 +372,11 @@ class Subject(commands.Cog, name='subject'):
 
     @unsubscribe.autocomplete('subject_name')
     async def unsubscription_autocomplete(self, interaction, current):
-        options = [get_real_subject(subject_name)[1] for subject_name in subject_data
-                   if subject_name in get_user_subjects(interaction.user.id)]
+        options = [get_real_subject(subject)[1] for subject in subject_data
+                   if subject in get_user_subjects(interaction.user.id)]
+        for subject in subject_data:
+            if subject in get_user_subjects(interaction.user.id):
+                options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -484,6 +495,8 @@ class Subject(commands.Cog, name='subject'):
     @admin.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject)[1] for subject in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -683,6 +696,8 @@ class Subject(commands.Cog, name='subject'):
     @add_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
@@ -728,6 +743,8 @@ class Subject(commands.Cog, name='subject'):
     @remove_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 

@@ -227,7 +227,7 @@ def remove_admin_subject(user_id: int, subject_name: str) -> None:
         user_generate_default_data(user_id)
     elif is_admin(user_id, subject_name):
         if is_owner(user_id, subject_name):
-            raise UserOwnerError('The owner of this subject has to be an admin!')  # TODO: SELF REMOVE ADMIN EXCEPTION
+            raise UserOwnerError('The owner of this subject has to be an admin!')
         user_data[user_id]['admin'].remove(subject_name)
         subject_data[subject_name]['admin'].remove(user_id)
         return
