@@ -14,7 +14,7 @@ class Subject(commands.Cog, name='subject'):
         self.client = client
 
     # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
-    # TODO: PROJECT, TEST COMMANDS
+    # TODO: TEST COMMANDS
     # TODO: IMPLEMENT DIRECT EXCEPTION MESSAGES
     @commands.hybrid_command(brief='Manage subjects', description='List, add, or remove subjects')
     async def subjects(self, ctx, options=None, *, subject_name=None):

@@ -1,3 +1,3 @@
 """Bot Constants"""
 
-VERSION = 'Alpha 1.0'
+VERSION = 'Alpha 1.1.0'
