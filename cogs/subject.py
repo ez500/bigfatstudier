@@ -13,9 +13,11 @@ class Subject(commands.Cog, name='subject'):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
-    # TODO: TEST COMMANDS
     # TODO: IMPLEMENT DIRECT EXCEPTION MESSAGES
+    # TODO: UPCOMING COMMAND
+    # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
+    # TODO: REMOVE ASSIGNMENTS/PROJECTS/TESTS ON DUE DATE
+    # TODO: MANUAL API CALLS TO ASSIGNMENTS THRU COMMAND? (WL.INSTRUCTURE.COM)
     @commands.hybrid_command(brief='Manage subjects', description='List, add, or remove subjects')
     async def subjects(self, ctx, options=None, *, subject_name=None):
         if options is None or options.lower() == 'list':
@@ -891,7 +893,7 @@ class Subject(commands.Cog, name='subject'):
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @commands.hybrid_command(brief='Add subject project', description='Add a project to a subject')
+    @commands.hybrid_command(brief='Add subject projects', description='Add a project to a subject')
     async def add_project(self, ctx, *, subject_name=None):
         if subject_name is None:
             try:
@@ -907,7 +909,7 @@ class Subject(commands.Cog, name='subject'):
         try:
             real_subject = get_real_subject(subject_name)
             if not is_subscribed(ctx.author.id, real_subject[0]):
-                await ctx.send(f'You need to be subscribed to {real_subject[1]} to add project!')
+                await ctx.send(f'You need to be subscribed to {real_subject[1]} to add a project!')
                 return
             await ctx.send(f'What project does {real_subject[1]} have?')
             msg1 = await self.client.wait_for('message',
@@ -985,19 +987,270 @@ class Subject(commands.Cog, name='subject'):
                                               check=lambda m: m.channel == ctx.channel and
                                               m.author == ctx.author,
                                               timeout=40.0)
-            assignment = msg1.content
+            project = msg1.content
         except asyncio.TimeoutError:
             await ctx.send('Timeout! Failed to remove project!')
             return
         try:
-            remove_subject_project(real_subject[0], assignment)
-            await ctx.send(f'''Successfully removed project '{assignment}' from {real_subject[1]}''')
+            remove_subject_project(real_subject[0], project)
+            await ctx.send(f'''Successfully removed project '{project}' from {real_subject[1]}''')
         except SubjectError:
             await ctx.send(f'There is no such subject as {subject_name}!')
         except SubjectAttributeError:
-            await ctx.send(f'{assignment} doesn\'t exist!')
+            await ctx.send(f'{project} doesn\'t exist!')
 
     @remove_project.autocomplete('subject_name')
+    async def subject_name_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='View tests',
+                             description='View or clear tests for each class')
+    async def test(self, ctx, *, subject_name=None, _clear=None):
+        if subject_name is None:
+            if _clear is None:
+                try:
+                    await ctx.send('What subject to check for tests?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to retrieve tests!')
+                    return
+            elif _clear.lower() == 'clear':
+                try:
+                    await ctx.send('What subject to clear tests?')
+                    msg = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                    subject_name = msg.content + ' clear'
+                    _clear = None
+                except asyncio.TimeoutError:
+                    await ctx.send('Timeout! Failed to clear tests!')
+                    return
+        elif subject_name.lower() == 'all':
+            if _clear is None:
+                if len(subject_data) == 0:
+                    await ctx.send('No subjects to check for tests for!')
+                    return
+                message = '# Tests for all subjects:\n'
+                for name in subject_data:
+                    if repr(subject_data[name]['test']) == '[]':
+                        message += f'**{get_real_subject(name)[1]}** has no upcoming tests.\n'
+                        continue
+                    message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_tests(name)) + '\n'
+                message = message[0:-1]
+                await ctx.send(message)
+                return
+            if _clear.lower() == 'clear':
+                await ctx.send('Sorry, but you cannot clear tests for all subjects.')
+                return
+            else:
+                await ctx.send(f'Invalid clear argument ({_clear})')
+                return
+        elif subject_name.lower() == 'subscribed':
+            if _clear is None:
+                if len(get_user_subjects(ctx.author.id)) == 0:
+                    await ctx.send('You are not subscribed to any subjects!')
+                    return
+                message = '# Tests for your subscribed subjects:\n'
+                for name in get_user_subjects(ctx.author.id):
+                    if repr(subject_data[name]['test']) == '[]':
+                        message += f'**{get_real_subject(name)[1]}** has no upcoming tests.\n'
+                        continue
+                    message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_tests(name)) + '\n'
+                message = message[0:-1]
+                await ctx.send(message)
+                return
+            if _clear.lower() == 'clear':
+                await ctx.send('Sorry, but you cannot clear tests for your subscribed subjects.')
+                return
+            else:
+                await ctx.send(f'Invalid clear argument ({_clear})')
+                return
+        if subject_name.lower() == 'clear':
+            try:
+                await ctx.send('What subject to clear tests?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content + ' clear'
+                _clear = None
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to clear tests!')
+                return
+        if _clear is None:
+            if subject_name.split()[-1] == 'clear':
+                subject_name = ' '.join(subject_name.split()[:-1])
+                if subject_name.lower() == 'all':
+                    await ctx.send('Sorry, but you cannot clear tests for all subjects.')
+                    return
+                if subject_name.lower() == 'subscribed':
+                    await ctx.send('Sorry, but you cannot clear tests for your subscribed subjects.')
+                    return
+                _clear = 'clear'
+            else:
+                try:
+                    real_subject = get_real_subject(subject_name)
+                    if len(subject_data[real_subject[0]]['test']) == 0:
+                        await ctx.send(f'There doesn\'t seem to be any upcoming tests for {real_subject[1]}.')
+                        return
+                    await ctx.send(f'Tests for **{real_subject[1]}**:\n' +
+                                   '\n'.join(get_subject_tests(real_subject[0])))
+                except SubjectError:
+                    await ctx.send(f'There is no such subject as {subject_name}!')
+        if _clear.lower() == 'clear':
+            try:
+                real_subject = get_real_subject(subject_name)
+                if not is_subscribed(ctx.author.id, real_subject[0]):
+                    await ctx.send(f'You need to be subscribed to {real_subject[1]} to clear tests!')
+                    return
+                await ctx.send(f'Are you sure you want to clear the tests for {real_subject[1]}?')
+                confirm = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                if confirm.content.lower() == 'yes':
+                    clear_subject_tests(real_subject[0])
+                    await ctx.send(f'Cleared tests for {real_subject[1]}')
+                else:
+                    await ctx.send('Confirmation failed')
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Confirmation failed')
+            except SubjectError:
+                await ctx.send(f'There is no such subject as {subject_name}!')
+            return
+        else:
+            await ctx.send(f'Invalid clear argument ({_clear})')
+            return
+
+    @test.autocomplete('subject_name')
+    async def subject_name_with_all_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        options[0:0] = ['all', 'subscribed']
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @test.autocomplete('_clear')
+    async def test_clear_autocomplete(self, _interaction, current):
+        options = ['clear']
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Add subject tests', description='Add an upcoming test to a subject')
+    async def add_test(self, ctx, *, subject_name=None):
+        if subject_name is None:
+            try:
+                await ctx.send('What subject to add an upcoming test?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to add upcoming test!')
+                return
+        try:
+            real_subject = get_real_subject(subject_name)
+            if not is_subscribed(ctx.author.id, real_subject[0]):
+                await ctx.send(f'You need to be subscribed to {real_subject[1]} to add upcoming tests!')
+                return
+            await ctx.send(f'What test will {real_subject[1]} have?')
+            msg1 = await self.client.wait_for('message',
+                                              check=lambda m: m.channel == ctx.channel and
+                                              m.author == ctx.author,
+                                              timeout=40.0)
+            test = msg1.content
+            await ctx.send('When will this test be? (mm/dd/yyyy)')
+            msg2 = await self.client.wait_for('message',
+                                              check=lambda m: m.channel == ctx.channel and
+                                              m.author == ctx.author,
+                                              timeout=40.0)
+            due_date = msg2.content
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to add test!')
+            return
+        try:
+            date = datetime.datetime.strptime(due_date, '%m/%d/%Y')
+            if date < datetime.datetime.now():
+                await ctx.send('This test date is before today. Add test anyway?')
+                confirm = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                if confirm.content.lower() != 'yes':
+                    await ctx.send('Confirmation failed! Failed to add test!')
+                    return
+        except ValueError:
+            await ctx.send('Not a valid date in the specified format!')
+            return
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to add test!')
+            return
+        try:
+            add_subject_test(real_subject[0], test, due_date)
+            await ctx.send(f'Successfully added {test} to {real_subject[1]} '
+                           f'due {due_date}')
+        except SubjectError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+        except SubjectAttributeError:
+            await ctx.send(f'You can\'t duplicate tests!')
+
+    @add_test.autocomplete('subject_name')
+    async def subject_name_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Remove subject tests', description='Remove a test from a subject')
+    async def remove_test(self, ctx, *, subject_name=None):
+        if subject_name is None:
+            try:
+                await ctx.send('What subject to remove a test?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to remove test!')
+                return
+        try:
+            real_subject = get_real_subject(subject_name)
+            if not is_subscribed(ctx.author.id, real_subject[0]):
+                await ctx.send(f'You need to be subscribed to {real_subject[1]} to remove tests!')
+                return
+            if len(get_subject_tests(real_subject[0])) == 0:
+                await ctx.send(f'{real_subject[1]} has no test to remove!')
+                return
+            await ctx.send(f'What test in {real_subject[1]} to remove? '
+                           f'''Upcoming tests: {', '.join(get_subject_test_names(real_subject[0]))}''')
+            msg1 = await self.client.wait_for('message',
+                                              check=lambda m: m.channel == ctx.channel and
+                                              m.author == ctx.author,
+                                              timeout=40.0)
+            test = msg1.content
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to remove test!')
+            return
+        try:
+            remove_subject_test(real_subject[0], test)
+            await ctx.send(f'''Successfully removed test '{test}' from {real_subject[1]}''')
+        except SubjectError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+        except SubjectAttributeError:
+            await ctx.send(f'{test} doesn\'t exist!')
+
+    @remove_test.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         for subject in subject_data:
