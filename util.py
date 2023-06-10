@@ -210,6 +210,61 @@ def clear_subject_projects(subject_name: str) -> None:
     raise SubjectError('This subject doesn\'t exist!')
 
 
+def get_subject_tests(subject_name: str) -> list[str]:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject_data:
+        test = []
+        for t in subject_data[subject_name]['test']:
+            test.append(f'''{t['name']}, due {t['due_date']}''')
+        return test
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def get_subject_test_names(subject_name: str) -> list[str]:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject_data:
+        test = []
+        for t in subject_data[subject_name]['test']:
+            test.append(t['name'])
+        return test
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def add_subject_test(subject_name: str, test: str, due_date: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    test = ' '.join(test.split())
+    if subject_name in subject_data:
+        for t in subject_data[subject_name]['test']:
+            if test.lower() == t['description']:
+                raise SubjectAttributeError(f'{test} already exists in this subject!')
+        subject_data[subject_name]['test'].append(Work(name=test,
+                                                       description=test.lower(),
+                                                       due_date=due_date).to_dict())
+        return
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def remove_subject_test(subject_name: str, test: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    test = ' '.join(test.split())
+    if subject_name in subject_data:
+        for t in subject_data[subject_name]['test']:
+            if test.lower() == t['description']:
+                subject_data[subject_name]['test'].remove(t)
+                return
+        raise SubjectAttributeError('This assignment doesn\'t exist!')
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def clear_subject_tests(subject_name: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject_data:
+        for test in subject_data[subject_name]['test']:
+            subject_data[subject_name]['test'].remove(test)
+        return
+    raise SubjectError('This subject doesn\'t exist!')
+
+
 def generate_message_listener(message_id: int, emojis: list[str], roles: list[int]):
     if len(emojis) != len(roles):
         print('here')

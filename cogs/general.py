@@ -3,6 +3,7 @@
 import discord
 from discord.ext import commands
 
+import constants
 from data_config import subject_data, save_all
 
 
@@ -57,6 +58,10 @@ class General(commands.Cog, name='general'):
                    command.name != 'help' and command.name != 'stop']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Version', description='Get the version of the bot')
+    async def version(self, ctx):
+        await ctx.send(f'This bot is on version **{constants.VERSION_NAME}**.')
 
     @commands.hybrid_command(brief='Kill the bot', description='Kill the bot, but only for for owner')
     async def stop(self, ctx):
