@@ -33,8 +33,8 @@ def get_real_subject(subject_name: str) -> list[str]:
 
 def add_subject(subject_name: str, owner: int) -> list[str]:
     subject_name = ' '.join(subject_name.split())
-    if subject_name.lower() == 'all':
-        raise SubjectNameError('You can\'t add an \'all\' subject!')
+    if subject_name.lower() == 'all' or subject_name.lower() == 'subscribed':
+        raise SubjectNameError('You can\'t add an \'all\' or \'subscribed\' subject!')
     if subject_name.lower() in subject_data:
         raise SubjectError('This subject already exists!')
     for subject in subject_data:
