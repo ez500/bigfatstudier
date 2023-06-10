@@ -729,7 +729,7 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'{real_subject[1]} has no homework to remove!')
                 return
             await ctx.send(f'What homework in {real_subject[1]} to remove? '
-                           f'''Current assignments: {', '.join(get_subject_homework_name(real_subject[0]))}''')
+                           f'''Current assignments: {', '.join(get_subject_homework_names(real_subject[0]))}''')
             msg1 = await self.client.wait_for('message',
                                               check=lambda m: m.channel == ctx.channel and
                                               m.author == ctx.author,
@@ -791,7 +791,7 @@ class Subject(commands.Cog, name='subject'):
                     if repr(subject_data[name]['project']) == '[]':
                         message += f'**{get_real_subject(name)[1]}** has no projects.\n'
                         continue
-                    message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_homework(name)) + '\n'
+                    message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_projects(name)) + '\n'
                 message = message[0:-1]
                 await ctx.send(message)
                 return
@@ -811,7 +811,7 @@ class Subject(commands.Cog, name='subject'):
                     if repr(subject_data[name]['project']) == '[]':
                         message += f'**{get_real_subject(name)[1]}** has no projects.\n'
                         continue
-                    message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_homework(name)) + '\n'
+                    message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_projects(name)) + '\n'
                 message = message[0:-1]
                 await ctx.send(message)
                 return
@@ -850,7 +850,7 @@ class Subject(commands.Cog, name='subject'):
                         await ctx.send(f'There doesn\'t seem to be any projects for {real_subject[1]}.')
                         return
                     await ctx.send(f'Projects for **{real_subject[1]}**:\n' +
-                                   '\n'.join(get_subject_homework(real_subject[0])))
+                                   '\n'.join(get_subject_projects(real_subject[0])))
                 except SubjectError:
                     await ctx.send(f'There is no such subject as {subject_name}!')
         if _clear.lower() == 'clear':
@@ -865,7 +865,7 @@ class Subject(commands.Cog, name='subject'):
                                                      m.author == ctx.author,
                                                      timeout=20.0)
                 if confirm.content.lower() == 'yes':
-                    clear_subject_homework(real_subject[0])
+                    clear_subject_projects(real_subject[0])
                     await ctx.send(f'Cleared projects for {real_subject[1]}')
                 else:
                     await ctx.send('Confirmation failed')
@@ -878,16 +878,130 @@ class Subject(commands.Cog, name='subject'):
             await ctx.send(f'Invalid clear argument ({_clear})')
             return
 
-    @homework.autocomplete('subject_name')
+    @project.autocomplete('subject_name')
     async def subject_name_with_all_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
         options[0:0] = ['all', 'subscribed']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
-    @homework.autocomplete('_clear')
+    @project.autocomplete('_clear')
     async def project_clear_autocomplete(self, _interaction, current):
         options = ['clear']
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Add subject project', description='Add a project to a subject')
+    async def add_project(self, ctx, *, subject_name=None):
+        if subject_name is None:
+            try:
+                await ctx.send('What subject to add project?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to add project!')
+                return
+        try:
+            real_subject = get_real_subject(subject_name)
+            if not is_subscribed(ctx.author.id, real_subject[0]):
+                await ctx.send(f'You need to be subscribed to {real_subject[1]} to add project!')
+                return
+            await ctx.send(f'What project does {real_subject[1]} have?')
+            msg1 = await self.client.wait_for('message',
+                                              check=lambda m: m.channel == ctx.channel and
+                                              m.author == ctx.author,
+                                              timeout=40.0)
+            project = msg1.content
+            await ctx.send('What is the due date of this project? (mm/dd/yyyy)')
+            msg2 = await self.client.wait_for('message',
+                                              check=lambda m: m.channel == ctx.channel and
+                                              m.author == ctx.author,
+                                              timeout=40.0)
+            due_date = msg2.content
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to add project!')
+            return
+        try:
+            date = datetime.datetime.strptime(due_date, '%m/%d/%Y')
+            if date < datetime.datetime.now():
+                await ctx.send('This due date is before today. Add the project anyway?')
+                confirm = await self.client.wait_for('message',
+                                                     check=lambda m: m.channel == ctx.channel and
+                                                     m.author == ctx.author,
+                                                     timeout=20.0)
+                if confirm.content.lower() != 'yes':
+                    await ctx.send('Confirmation failed! Failed to add project!')
+                    return
+        except ValueError:
+            await ctx.send('Not a valid date in the specified format!')
+            return
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to add project!')
+            return
+        try:
+            add_subject_project(real_subject[0], project, due_date)
+            await ctx.send(f'Successfully added {project} to {real_subject[1]} '
+                           f'due {due_date}')
+        except SubjectError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+        except SubjectAttributeError:
+            await ctx.send(f'You can\'t duplicate projects!')
+
+    @add_project.autocomplete('subject_name')
+    async def subject_name_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
+        return [discord.app_commands.Choice(name=option, value=option)
+                for option in options if current.lower() in option.lower()]
+
+    @commands.hybrid_command(brief='Remove subject projects', description='Remove a project from a subject')
+    async def remove_project(self, ctx, *, subject_name=None):
+        if subject_name is None:
+            try:
+                await ctx.send('What subject to remove project?')
+                msg = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and
+                                                 m.author == ctx.author,
+                                                 timeout=20.0)
+                subject_name = msg.content
+            except asyncio.TimeoutError:
+                await ctx.send('Timeout! Failed to remove project!')
+                return
+        try:
+            real_subject = get_real_subject(subject_name)
+            if not is_subscribed(ctx.author.id, real_subject[0]):
+                await ctx.send(f'You need to be subscribed to {real_subject[1]} to remove projects!')
+                return
+            if len(get_subject_projects(real_subject[0])) == 0:
+                await ctx.send(f'{real_subject[1]} has no project to remove!')
+                return
+            await ctx.send(f'What project in {real_subject[1]} to remove? '
+                           f'''Current projects: {', '.join(get_subject_project_names(real_subject[0]))}''')
+            msg1 = await self.client.wait_for('message',
+                                              check=lambda m: m.channel == ctx.channel and
+                                              m.author == ctx.author,
+                                              timeout=40.0)
+            assignment = msg1.content
+        except asyncio.TimeoutError:
+            await ctx.send('Timeout! Failed to remove project!')
+            return
+        try:
+            remove_subject_project(real_subject[0], assignment)
+            await ctx.send(f'''Successfully removed project '{assignment}' from {real_subject[1]}''')
+        except SubjectError:
+            await ctx.send(f'There is no such subject as {subject_name}!')
+        except SubjectAttributeError:
+            await ctx.send(f'{assignment} doesn\'t exist!')
+
+    @remove_project.autocomplete('subject_name')
+    async def subject_name_autocomplete(self, _interaction, current):
+        options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 

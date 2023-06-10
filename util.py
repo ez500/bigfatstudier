@@ -110,7 +110,7 @@ def get_subject_homework(subject_name: str) -> list[str]:
     raise SubjectError('This subject doesn\'t exist!')
 
 
-def get_subject_homework_name(subject_name: str) -> list[str]:
+def get_subject_homework_names(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
         homework = []
@@ -120,27 +120,27 @@ def get_subject_homework_name(subject_name: str) -> list[str]:
     raise SubjectError('This subject doesn\'t exist!')
 
 
-def add_subject_homework(subject_name: str, assignment: str, due_date: str) -> None:
+def add_subject_homework(subject_name: str, homework: str, due_date: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
-    assignment = ' '.join(assignment.split())
+    homework = ' '.join(homework.split())
     if subject_name in subject_data:
-        for homework in subject_data[subject_name]['homework']:
-            if assignment.lower() == homework['description']:
-                raise SubjectAttributeError(f'{assignment} already exists in this subject!')
-        subject_data[subject_name]['homework'].append(Work(name=assignment,
-                                                           description=assignment.lower(),
+        for h in subject_data[subject_name]['homework']:
+            if homework.lower() == h['description']:
+                raise SubjectAttributeError(f'{homework} already exists in this subject!')
+        subject_data[subject_name]['homework'].append(Work(name=homework,
+                                                           description=homework.lower(),
                                                            due_date=due_date).to_dict())
         return
     raise SubjectError('This subject doesn\'t exist!')
 
 
-def remove_subject_homework(subject_name: str, assignment: str) -> None:
+def remove_subject_homework(subject_name: str, homework: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
-    assignment = ' '.join(assignment.split())
+    homework = ' '.join(homework.split())
     if subject_name in subject_data:
-        for homework in subject_data[subject_name]['homework']:
-            if assignment.lower() == homework['description']:
-                subject_data[subject_name]['homework'].remove(homework)
+        for h in subject_data[subject_name]['homework']:
+            if homework.lower() == h['description']:
+                subject_data[subject_name]['homework'].remove(h)
                 return
         raise SubjectAttributeError('This assignment doesn\'t exist!')
     raise SubjectError('This subject doesn\'t exist!')
@@ -151,6 +151,61 @@ def clear_subject_homework(subject_name: str) -> None:
     if subject_name in subject_data:
         for homework in subject_data[subject_name]['homework']:
             subject_data[subject_name]['homework'].remove(homework)
+        return
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def get_subject_projects(subject_name: str) -> list[str]:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject_data:
+        project = []
+        for p in subject_data[subject_name]['project']:
+            project.append(f'''{p['name']}, due {p['due_date']}''')
+        return project
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def get_subject_project_names(subject_name: str) -> list[str]:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject_data:
+        project = []
+        for p in subject_data[subject_name]['project']:
+            project.append(p['name'])
+        return project
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def add_subject_project(subject_name: str, project: str, due_date: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    project = ' '.join(project.split())
+    if subject_name in subject_data:
+        for p in subject_data[subject_name]['project']:
+            if project.lower() == p['description']:
+                raise SubjectAttributeError(f'{project} already exists in this subject!')
+        subject_data[subject_name]['project'].append(Work(name=project,
+                                                          description=project.lower(),
+                                                          due_date=due_date).to_dict())
+        return
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def remove_subject_project(subject_name: str, project: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    project = ' '.join(project.split())
+    if subject_name in subject_data:
+        for p in subject_data[subject_name]['project']:
+            if project.lower() == p['description']:
+                subject_data[subject_name]['project'].remove(p)
+                return
+        raise SubjectAttributeError('This assignment doesn\'t exist!')
+    raise SubjectError('This subject doesn\'t exist!')
+
+
+def clear_subject_projects(subject_name: str) -> None:
+    subject_name = ' '.join(subject_name.split()).lower()
+    if subject_name in subject_data:
+        for project in subject_data[subject_name]['project']:
+            subject_data[subject_name]['project'].remove(project)
         return
     raise SubjectError('This subject doesn\'t exist!')
 
