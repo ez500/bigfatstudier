@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 from data_config import message_listener
-from util import generate_message_listener, remove_message_listener
+from util import generate_message_listener, remove_message_listener, MessageAttributeError, MessageError
 
 
 class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
@@ -106,7 +106,10 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
                         await msg_listener.add_reaction(e)
                 continue
             await msg_listener.add_reaction(emoji)
-        generate_message_listener(msg_listener.id, emoji_listener, role_listener)
+        try:
+            generate_message_listener(msg_listener.id, emoji_listener, role_listener)
+        except MessageAttributeError:
+            await ctx.send(repr(MessageAttributeError))
 
 
 async def setup(client):
