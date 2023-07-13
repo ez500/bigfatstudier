@@ -316,7 +316,7 @@ def add_user_subject(user_id: int, subject_name: str) -> None:
     if subject_name in subject_data:
         if is_subscribed(user_id, subject_name):
             raise UserError(f'You are already subscribed to {get_real_subject(subject_name)[1]}!')
-        user_data[user_id]['classes'][subject_name] = (UserClass(name=subject_name,permission_level=0).to_dict())
+        user_data[user_id]['classes'][subject_name] = (UserClass(name=subject_name, permission_level=0).to_dict())
         subject_data[subject_name]['students'].append(user_id)
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
@@ -370,18 +370,18 @@ def is_subscribed(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
         return False
-    return user_data[user_id]['classes'][subject_name]['permission_level'] == 0
+    return int(user_data[user_id]['classes'][subject_name]['permission_level']) >= 0
 
 
 def is_admin(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
         return False
-    return user_data[user_id]['classes'][subject_name]['permission_level'] >= 1
+    return int(user_data[user_id]['classes'][subject_name]['permission_level']) >= 1
 
 
 def is_owner(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
         return False
-    return user_data[user_id]['classes'][subject_name]['permission_level'] == 2
+    return int(user_data[user_id]['classes'][subject_name]['permission_level']) == 2
