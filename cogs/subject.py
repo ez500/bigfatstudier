@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import traceback
 
 import discord
 from discord.ext import commands
@@ -13,7 +14,6 @@ class Subject(commands.Cog, name='subject'):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    # TODO: IMPLEMENT DIRECT EXCEPTION MESSAGES
     # TODO: UPCOMING COMMAND
     # TODO: IMPLEMENT ASSIGNMENT + PERSONALIZED REMINDERS
     # TODO: REMOVE ASSIGNMENTS/PROJECTS/TESTS ON DUE DATE
@@ -46,12 +46,14 @@ class Subject(commands.Cog, name='subject'):
             try:
                 real_subject = add_subject(subject_name, ctx.author.id)
                 await ctx.send(f'Successfully added {real_subject[1]} to the subject list!')
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
-            except SubjectNameError:
-                await ctx.send(repr(SubjectNameError))
-            except SubjectAttributeError:
-                await ctx.send(repr(SubjectAttributeError))
+            except SubjectError as e:
+                await ctx.send(e)
+            except SubjectNameError as e:
+                await ctx.send(e)
+            except SubjectAttributeError as e:
+                await ctx.send(e)
+            except Exception:
+                print(traceback.format_exc())
             return
         elif options.lower() == 'remove':
             if subject_name is None:
@@ -72,8 +74,8 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send(f'The subject {real_subject[1]} has been successfully removed')
                     return
                 await ctx.send(f'You must be the owner of {real_subject[1]} to delete it!')
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
             return
         else:
             subject_name = f'{options} {subject_name}'
@@ -86,8 +88,8 @@ class Subject(commands.Cog, name='subject'):
                            f'''{'You are subscribed to this class!'
                            if is_subscribed(ctx.author.it, real_subject[0])
                            else 'You are not subscribed to this class!'}''')
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
+        except SubjectError as e:
+            await ctx.send(e)
 
     @subjects.autocomplete('options')
     async def subject_options_autocomplete(self, _interaction, current):
@@ -141,8 +143,8 @@ class Subject(commands.Cog, name='subject'):
                                                  m.author == ctx.author,
                                                  timeout=20.0)
                 subject_alias = msg.content
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
                 return
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Failed to add alias!')
@@ -150,8 +152,8 @@ class Subject(commands.Cog, name='subject'):
             try:
                 add_subject_alias(real_subject[0], subject_alias)
                 await ctx.send(f'Added {subject_alias} to the list of aliases of {real_subject[1]}!')
-            except SubjectAttributeError:
-                await ctx.send(repr(SubjectAttributeError))
+            except SubjectAttributeError as e:
+                await ctx.send(e)
             return
         elif options.lower() == 'remove':
             if subject_name is None:
@@ -176,8 +178,8 @@ class Subject(commands.Cog, name='subject'):
                                                  m.author == ctx.author,
                                                  timeout=20.0)
                 subject_alias = msg.content
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
                 return
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Failed to add alias!')
@@ -185,8 +187,8 @@ class Subject(commands.Cog, name='subject'):
             try:
                 remove_subject_alias(real_subject[0], subject_alias)
                 await ctx.send(f'Removed {subject_alias} from the list of aliases of {real_subject[1]}!')
-            except SubjectAttributeError:
-                await ctx.send(repr(SubjectAttributeError))
+            except SubjectAttributeError as e:
+                await ctx.send(e)
             return
         else:
             subject_name = f'{options} {subject_name}'
@@ -195,8 +197,8 @@ class Subject(commands.Cog, name='subject'):
             aliases = ', '.join(get_subject_alias(real_subject[0]))
             await ctx.send(f'''Aliases of {real_subject[1]}: {aliases if len(aliases) > 0 else 'No aliases'}''')
             return
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
+        except SubjectError as e:
+            await ctx.send(e)
 
     @alias.autocomplete('options')
     async def alias_options_autocomplete(self, _interaction, current):
@@ -250,8 +252,8 @@ class Subject(commands.Cog, name='subject'):
                                                  m.author == ctx.author,
                                                  timeout=20.0)
                 subject_description = msg.content
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
                 return
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Failed to set description!')
@@ -259,8 +261,8 @@ class Subject(commands.Cog, name='subject'):
             try:
                 set_subject_description(real_subject[0], subject_description)
                 await ctx.send(f'Set description of {real_subject[1]} to *{subject_description}*!')
-            except SubjectAttributeError:
-                await ctx.send(repr(SubjectAttributeError))
+            except SubjectAttributeError as e:
+                await ctx.send(e)
             return
         elif options.lower() == 'clear':
             if subject_name is None:
@@ -279,14 +281,14 @@ class Subject(commands.Cog, name='subject'):
                 if not is_subscribed(ctx.author.id, real_subject[0]):
                     await ctx.send(f'You must be subscribed to {real_subject[1]} to clear its description!')
                     return
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
                 return
             try:
                 set_subject_description(real_subject[0], 'No description')
                 await ctx.send(f'Cleared description of {real_subject[1]}!')
-            except SubjectAttributeError:
-                await ctx.send(repr(SubjectAttributeError))
+            except SubjectAttributeError as e:
+                await ctx.send(e)
             return
         else:
             subject_name = f'{options} {subject_name}'
@@ -294,8 +296,8 @@ class Subject(commands.Cog, name='subject'):
             real_subject = get_real_subject(subject_name)
             await ctx.send(f'**{real_subject[1]} description:** {get_subject_description(real_subject[0])}')
             return
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
+        except SubjectError as e:
+            await ctx.send(e)
 
     @description.autocomplete('options')
     async def description_options_autocomplete(self, _interaction, current):
@@ -327,13 +329,13 @@ class Subject(commands.Cog, name='subject'):
                 return
         try:
             real_subject = get_real_subject(subject_name)
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
+        except SubjectError as e:
+            await ctx.send(e)
             return
         try:
             add_user_subject(ctx.author.id, real_subject[0])
-        except UserError:
-            await ctx.send(repr(UserError))
+        except UserError as e:
+            await ctx.send(e)
             return
         await ctx.send(f'Subscribed to {real_subject[1]}!')
 
@@ -361,17 +363,17 @@ class Subject(commands.Cog, name='subject'):
                 return
         try:
             real_subject = get_real_subject(subject_name)
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
+        except SubjectError as e:
+            await ctx.send(e)
             return
         try:
             remove_user_subject(ctx.author.id, real_subject[0])
             await ctx.send(f'Unsubscribed from {real_subject[1]}!')
-        except UserOwnerError:
-            await ctx.send(repr(UserOwnerError))
+        except UserOwnerError as e:
+            await ctx.send(e)
             return
-        except UserError:
-            await ctx.send(repr(UserError))
+        except UserError as e:
+            await ctx.send(e)
             return
 
     @unsubscribe.autocomplete('subject_name')
@@ -413,10 +415,10 @@ class Subject(commands.Cog, name='subject'):
                     return
             try:
                 real_subject = get_real_subject(subject_name)
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
                 return
-            if subject_data[real_subject[0]]['owner'] != ctx.author.id:
+            if not is_owner(ctx.author.id, real_subject[0]):
                 await ctx.send(f'Only the owner of {real_subject[1]} can add admins to it!')
                 return
             if len(subject_data[real_subject[0]]['admins']) == 10:
@@ -434,8 +436,8 @@ class Subject(commands.Cog, name='subject'):
             try:
                 add_admin_subject(user_mention, real_subject[0])
                 await ctx.send(f'Added {user_mention} as admin of {real_subject[1]}!')
-            except UserError:
-                await ctx.send(repr(UserError))
+            except UserError as e:
+                await ctx.send(e)
             return
         elif options.lower() == 'remove':
             if subject_name is None:
@@ -451,10 +453,10 @@ class Subject(commands.Cog, name='subject'):
                     return
             try:
                 real_subject = get_real_subject(subject_name)
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
                 return
-            if subject_data[real_subject[0]]['owner'] != ctx.author.id:
+            if not is_owner(ctx.author.id, real_subject[0]):
                 await ctx.send(f'Only the owner of {real_subject[1]} can remove admins from it!')
                 return
             try:
@@ -469,17 +471,17 @@ class Subject(commands.Cog, name='subject'):
             try:
                 remove_admin_subject(user_mention, real_subject[0])
                 await ctx.send(f'Removed {user_mention} as admin of {real_subject[1]}!')
-            except UserError:
-                await ctx.send(repr(UserError))
-            except UserOwnerError:
-                await ctx.send(repr(UserOwnerError))
+            except UserError as e:
+                await ctx.send(e)
+            except UserOwnerError as e:
+                await ctx.send(e)
             return
         else:
             subject_name = f'{options} {subject_name}'
         try:
             real_subject = get_real_subject(subject_name)
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
+        except SubjectError as e:
+            await ctx.send(e)
             return
         message = f'Admins of {real_subject[1]}: '
         for admin in subject_data[real_subject[0]]['admins']:
@@ -599,8 +601,8 @@ class Subject(commands.Cog, name='subject'):
                         return
                     await ctx.send(f'Homework for **{real_subject[1]}**:\n' +
                                    '\n'.join(get_subject_homework(real_subject[0])))
-                except SubjectError:
-                    await ctx.send(repr(SubjectError))
+                except SubjectError as e:
+                    await ctx.send(e)
         if _clear.lower() == 'clear':
             try:
                 real_subject = get_real_subject(subject_name)
@@ -619,8 +621,8 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('Confirmation failed')
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Confirmation failed')
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
             return
         else:
             await ctx.send(f'Invalid clear argument ({_clear})')
@@ -693,10 +695,10 @@ class Subject(commands.Cog, name='subject'):
             add_subject_homework(real_subject[0], assignment, due_date)
             await ctx.send(f'Successfully added {assignment} to {real_subject[1]} '
                            f'due {due_date}')
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
-        except SubjectAttributeError:
-            await ctx.send(repr(SubjectAttributeError))
+        except SubjectError as e:
+            await ctx.send(e)
+        except SubjectAttributeError as e:
+            await ctx.send(e)
 
     @add_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -740,10 +742,10 @@ class Subject(commands.Cog, name='subject'):
         try:
             remove_subject_homework(real_subject[0], assignment)
             await ctx.send(f'''Successfully removed homework '{assignment}' from {real_subject[1]}''')
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
-        except SubjectAttributeError:
-            await ctx.send(repr(SubjectAttributeError))
+        except SubjectError as e:
+            await ctx.send(e)
+        except SubjectAttributeError as e:
+            await ctx.send(e)
 
     @remove_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -850,8 +852,8 @@ class Subject(commands.Cog, name='subject'):
                         return
                     await ctx.send(f'Projects for **{real_subject[1]}**:\n' +
                                    '\n'.join(get_subject_projects(real_subject[0])))
-                except SubjectError:
-                    await ctx.send(repr(SubjectError))
+                except SubjectError as e:
+                    await ctx.send(e)
         if _clear.lower() == 'clear':
             try:
                 real_subject = get_real_subject(subject_name)
@@ -870,8 +872,8 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('Confirmation failed')
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Confirmation failed')
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
             return
         else:
             await ctx.send(f'Invalid clear argument ({_clear})')
@@ -944,10 +946,10 @@ class Subject(commands.Cog, name='subject'):
             add_subject_project(real_subject[0], project, due_date)
             await ctx.send(f'Successfully added {project} to {real_subject[1]} '
                            f'due {due_date}')
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
-        except SubjectAttributeError:
-            await ctx.send(repr(SubjectAttributeError))
+        except SubjectError as e:
+            await ctx.send(e)
+        except SubjectAttributeError as e:
+            await ctx.send(e)
 
     @add_project.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -991,10 +993,10 @@ class Subject(commands.Cog, name='subject'):
         try:
             remove_subject_project(real_subject[0], project)
             await ctx.send(f'''Successfully removed project '{project}' from {real_subject[1]}''')
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
-        except SubjectAttributeError:
-            await ctx.send(repr(SubjectAttributeError))
+        except SubjectError as e:
+            await ctx.send(e)
+        except SubjectAttributeError as e:
+            await ctx.send(e)
 
     @remove_project.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -1101,8 +1103,8 @@ class Subject(commands.Cog, name='subject'):
                         return
                     await ctx.send(f'Tests for **{real_subject[1]}**:\n' +
                                    '\n'.join(get_subject_tests(real_subject[0])))
-                except SubjectError:
-                    await ctx.send(repr(SubjectError))
+                except SubjectError as e:
+                    await ctx.send(e)
         if _clear.lower() == 'clear':
             try:
                 real_subject = get_real_subject(subject_name)
@@ -1121,8 +1123,8 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('Confirmation failed')
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Confirmation failed')
-            except SubjectError:
-                await ctx.send(repr(SubjectError))
+            except SubjectError as e:
+                await ctx.send(e)
             return
         else:
             await ctx.send(f'Invalid clear argument ({_clear})')
@@ -1195,10 +1197,10 @@ class Subject(commands.Cog, name='subject'):
             add_subject_test(real_subject[0], test, due_date)
             await ctx.send(f'Successfully added {test} to {real_subject[1]} '
                            f'due {due_date}')
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
-        except SubjectAttributeError:
-            await ctx.send(repr(SubjectAttributeError))
+        except SubjectError as e:
+            await ctx.send(e)
+        except SubjectAttributeError as e:
+            await ctx.send(e)
 
     @add_test.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -1242,10 +1244,10 @@ class Subject(commands.Cog, name='subject'):
         try:
             remove_subject_test(real_subject[0], test)
             await ctx.send(f'''Successfully removed test '{test}' from {real_subject[1]}''')
-        except SubjectError:
-            await ctx.send(repr(SubjectError))
-        except SubjectAttributeError:
-            await ctx.send(repr(SubjectAttributeError))
+        except SubjectError as e:
+            await ctx.send(e)
+        except SubjectAttributeError as e:
+            await ctx.send(e)
 
     @remove_test.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):

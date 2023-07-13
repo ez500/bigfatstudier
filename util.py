@@ -42,7 +42,14 @@ def add_subject(subject_name: str, owner: int) -> list[str]:
     for subject in subject_data:
         if subject_name.lower() in subject_data[subject]['alias']:
             raise SubjectAttributeError(f'{subject_name} already exists as an alias to {get_real_subject(subject)[1]}!')
-    subject_generate_default_data(subject_name, owner)
+    subject_generate_default_data(subject_name)
+    subject_data[subject_name.lower()]['real'] = subject_name
+    subject_data[subject_name.lower()]['owner'] = owner
+    subject_data[subject_name.lower()]['admin'].append(owner)
+    subject_data[subject_name.lower()]['students'].append(owner)
+    if owner not in user_data:
+        user_generate_default_data(owner)
+    user_data[owner]['classes'][subject_name.lower()] = (UserClass(name=subject_name, permission_level=2).to_dict())
     return get_real_subject(subject_name)
 
 
@@ -50,7 +57,6 @@ def remove_subject(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
         remove_all_users_subject(subject_name)
-        remove_all_admins_subject(subject_name)
         del subject_data[subject_name]
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
@@ -134,9 +140,9 @@ def add_subject_homework(subject_name: str, homework: str, due_date: str) -> Non
         for h in subject_data[subject_name]['homework']:
             if homework.lower() == h['description']:
                 raise SubjectAttributeError(f'You can\'t duplicate homework assignments!')
-        subject_data[subject_name]['homework'].append(Work(name=homework,
-                                                           description=homework.lower(),
-                                                           due_date=due_date).to_dict())
+        subject_data[subject_name]['homework'][homework] = Work(name=homework,
+                                                                description=homework.lower(),
+                                                                due_date=due_date).to_dict()
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -165,20 +171,20 @@ def clear_subject_homework(subject_name: str) -> None:
 def get_subject_projects(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
-        project = []
+        projects = []
         for p in subject_data[subject_name]['project']:
-            project.append(f'''{p['name']}, due {p['due_date']}''')
-        return project
+            projects.append(f'''{p['name']}, due {p['due_date']}''')
+        return projects
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
 def get_subject_project_names(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
-        project = []
+        projects = []
         for p in subject_data[subject_name]['project']:
-            project.append(p['name'])
-        return project
+            projects.append(p['name'])
+        return projects
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
@@ -189,9 +195,9 @@ def add_subject_project(subject_name: str, project: str, due_date: str) -> None:
         for p in subject_data[subject_name]['project']:
             if project.lower() == p['description']:
                 raise SubjectAttributeError(f'You can\'t duplicate projects!')
-        subject_data[subject_name]['project'].append(Work(name=project,
-                                                          description=project.lower(),
-                                                          due_date=due_date).to_dict())
+        subject_data[subject_name]['project'][project] = Work(name=project,
+                                                              description=project.lower(),
+                                                              due_date=due_date).to_dict()
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -220,20 +226,20 @@ def clear_subject_projects(subject_name: str) -> None:
 def get_subject_tests(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
-        test = []
+        tests = []
         for t in subject_data[subject_name]['test']:
-            test.append(f'''{t['name']}, due {t['due_date']}''')
-        return test
+            tests.append(f'''{t['name']}, due {t['due_date']}''')
+        return tests
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
 def get_subject_test_names(subject_name: str) -> list[str]:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
-        test = []
+        tests = []
         for t in subject_data[subject_name]['test']:
-            test.append(t['name'])
-        return test
+            tests.append(t['name'])
+        return tests
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
@@ -244,9 +250,9 @@ def add_subject_test(subject_name: str, test: str, due_date: str) -> None:
         for t in subject_data[subject_name]['test']:
             if test.lower() == t['description']:
                 raise SubjectAttributeError(f'You can\'t duplicate tests!')
-        subject_data[subject_name]['test'].append(Work(name=test,
-                                                       description=test.lower(),
-                                                       due_date=due_date).to_dict())
+        subject_data[subject_name]['test'][test] = Work(name=test,
+                                                        description=test.lower(),
+                                                        due_date=due_date).to_dict()
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -291,13 +297,17 @@ def remove_message_listener(message_id: int):
 def get_user_subjects(user_id: int) -> list[str]:
     if user_id not in user_data:
         user_generate_default_data(user_id)
+    classes = []
+    for c in user_data[user_id]['classes']:
+        classes.append(get_real_subject(c['name'])[1])
     return user_data[user_id]['classes']
 
 
 def get_admin_subjects(user_id: int) -> list[str]:
     if user_id not in user_data:
         user_generate_default_data(user_id)
-    return user_data[user_id]['admin']
+    admin_classes = [c for c in user_data[user_id]['classes'] if c['permission_level'] == 2]
+    return admin_classes
 
 
 def add_user_subject(user_id: int, subject_name: str) -> None:
@@ -306,7 +316,7 @@ def add_user_subject(user_id: int, subject_name: str) -> None:
     if subject_name in subject_data:
         if is_subscribed(user_id, subject_name):
             raise UserError(f'You are already subscribed to {get_real_subject(subject_name)[1]}!')
-        user_data[user_id]['classes'].append(subject_name)
+        user_data[user_id]['classes'][subject_name] = (UserClass(name=subject_name,permission_level=0).to_dict())
         subject_data[subject_name]['students'].append(user_id)
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
@@ -315,9 +325,9 @@ def add_user_subject(user_id: int, subject_name: str) -> None:
 def remove_user_subject(user_id: int, subject_name: str) -> None:
     if user_id not in user_data:
         user_generate_default_data(user_id)
-    elif subject_name in user_data[user_id]['classes']:
-        if is_owner(user_id, subject_name):
-            raise UserOwnerError(f'An owner of the subject cannot unsubscribe!')
+    if is_owner(user_id, subject_name):
+        raise UserOwnerError(f'An owner of the subject cannot unsubscribe!')
+    if subject_name in user_data[user_id]['classes']:
         user_data[user_id]['classes'].remove(subject_name)
         subject_data[subject_name]['students'].remove(user_id)
         return
@@ -337,7 +347,7 @@ def add_admin_subject(user_mention: str, subject_name: str) -> None:
     if subject_name in subject_data:
         if is_admin(user_id, subject_name):
             raise UserError(f'{user_mention} is already an admin of {get_real_subject(subject_name)[1]}!')
-        user_data[user_id]['admin'].append(subject_name)
+        user_data[user_id]['classes'][subject_name]['permission_level'] = 1
         subject_data[subject_name]['admin'].append(user_id)
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
@@ -347,40 +357,31 @@ def remove_admin_subject(user_mention: str, subject_name: str) -> None:
     user_id = int(user_mention[2:-1])
     if user_id not in user_data:
         user_generate_default_data(user_id)
+    elif is_owner(user_id, subject_name):
+        raise UserOwnerError(f'The owner cannot be removed as admin of their own subject!')
     elif is_admin(user_id, subject_name):
-        if is_owner(user_id, subject_name):
-            raise UserOwnerError(f'The owner cannot be removed as admin of their own subject!')
-        user_data[user_id]['admin'].remove(subject_name)
+        user_data[user_id]['classes'][subject_name]['permission_level'] = 0
         subject_data[subject_name]['admin'].remove(user_id)
         return
     raise UserError(f'{user_mention} is not an admin of {get_real_subject(subject_name)[1]}!')
 
 
-def remove_all_admins_subject(subject_name: str) -> None:
-    for user_id in user_data:
-        if subject_name in user_data[user_id]['admin']:
-            user_data[user_id]['admin'].remove(subject_name)
-
-
 def is_subscribed(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
-    elif subject_name in get_user_subjects(user_id):
-        return True
-    return False
+        return False
+    return user_data[user_id]['classes'][subject_name]['permission_level'] == 0
 
 
 def is_admin(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
-    elif subject_name in get_admin_subjects(user_id):
-        return True
-    return False
+        return False
+    return user_data[user_id]['classes'][subject_name]['permission_level'] >= 1
 
 
 def is_owner(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
-    elif user_data[user_id]['owner'] == subject_name:
-        return True
-    return False
+        return False
+    return user_data[user_id]['classes'][subject_name]['permission_level'] == 2

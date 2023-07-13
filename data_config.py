@@ -14,22 +14,30 @@ class Work:
         return {k: str(v) for k, v in asdict(self).items()}
 
 
+@dataclass
+class UserClass:
+    name: str
+    permission_level: int  # permission levels: 0 - student, 1 - admin, 2 - owner
+
+    def to_dict(self):
+        return {k: str(v) for k, v in asdict(self).items()}
+
+
 SUBJECT_DATA = {'real': '',
                 'alias': [],
                 'description': 'No description',
                 'owner': '',
                 'admin': [],
                 'students': [],
-                'homework': [],
-                'project': [],
-                'test': [], }
+                'homework': {},
+                'project': {},
+                'test': {}, }
 
 MESSAGE_DATA = {'emoji': [],
                 'role': [], }
 
-USER_DATA = {'classes': [],
-             'reminders': [],
-             'admin': [], }
+USER_DATA = {'classes': {},
+             'reminders': [], }
 
 with open('./data/subject_data', 'r') as f:
     subject_data = ast.literal_eval(f.read())
@@ -58,14 +66,10 @@ def _generate_default_data(data: dict, default: dict):
             data[key] = value
 
 
-def subject_generate_default_data(subject_name: str, owner: int):
+def subject_generate_default_data(subject_name: str):
     if subject_name.lower() not in subject_data:
         subject_data[subject_name.lower()] = {}
     _generate_default_data(subject_data[subject_name.lower()], SUBJECT_DATA)
-    subject_data[subject_name.lower()]['real'] = subject_name
-    subject_data[subject_name.lower()]['owner'] = owner
-    subject_data[subject_name.lower()]['admin'].append(owner)
-    subject_data[subject_name.lower()]['students'].append(owner)
 
 
 def message_generate_default_data(message_id: int):
