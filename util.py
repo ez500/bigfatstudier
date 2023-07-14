@@ -153,7 +153,7 @@ def remove_subject_homework(subject_name: str, homework: str) -> None:
     if subject_name in subject_data:
         for h in subject_data[subject_name]['homework']:
             if homework.lower() == h['description']:
-                subject_data[subject_name]['homework'].remove(h)
+                del subject_data[subject_name]['homework'][h]
                 return
         raise SubjectAttributeError(f'{homework} doesn\'t exist!')
     raise SubjectError(f'There is no such subject as {subject_name}!')
@@ -163,7 +163,7 @@ def clear_subject_homework(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
         for homework in subject_data[subject_name]['homework']:
-            subject_data[subject_name]['homework'].remove(homework)
+            del subject_data[subject_name]['homework'][homework]
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -208,7 +208,7 @@ def remove_subject_project(subject_name: str, project: str) -> None:
     if subject_name in subject_data:
         for p in subject_data[subject_name]['project']:
             if project.lower() == p['description']:
-                subject_data[subject_name]['project'].remove(p)
+                del subject_data[subject_name]['project'][p]
                 return
         raise SubjectAttributeError(f'{project} doesn\'t exist!')
     raise SubjectError(f'There is no such subject as {subject_name}!')
@@ -218,7 +218,7 @@ def clear_subject_projects(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
         for project in subject_data[subject_name]['project']:
-            subject_data[subject_name]['project'].remove(project)
+            del subject_data[subject_name]['project'][project]
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -263,7 +263,7 @@ def remove_subject_test(subject_name: str, test: str) -> None:
     if subject_name in subject_data:
         for t in subject_data[subject_name]['test']:
             if test.lower() == t['description']:
-                subject_data[subject_name]['test'].remove(t)
+                del subject_data[subject_name]['test'][t]
                 return
         raise SubjectAttributeError(f'{test} doesn\'t exist!')
     raise SubjectError(f'There is no such subject as {subject_name}!')
@@ -273,7 +273,7 @@ def clear_subject_tests(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
         for test in subject_data[subject_name]['test']:
-            subject_data[subject_name]['test'].remove(test)
+            del subject_data[subject_name]['test'][test]
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -297,9 +297,6 @@ def remove_message_listener(message_id: int):
 def get_user_subjects(user_id: int) -> list[str]:
     if user_id not in user_data:
         user_generate_default_data(user_id)
-    classes = []
-    for c in user_data[user_id]['classes']:
-        classes.append(get_real_subject(c['name'])[1])
     return user_data[user_id]['classes']
 
 
@@ -328,7 +325,7 @@ def remove_user_subject(user_id: int, subject_name: str) -> None:
     if is_owner(user_id, subject_name):
         raise UserOwnerError(f'An owner of the subject cannot unsubscribe!')
     if subject_name in user_data[user_id]['classes']:
-        user_data[user_id]['classes'].remove(subject_name)
+        del user_data[user_id]['classes'][subject_name]
         subject_data[subject_name]['students'].remove(user_id)
         return
     raise UserError(f'You are already not subscribed to {get_real_subject(subject_name)[1]}!')
@@ -337,7 +334,7 @@ def remove_user_subject(user_id: int, subject_name: str) -> None:
 def remove_all_users_subject(subject_name: str) -> None:
     for user_id in user_data:
         if subject_name in user_data[user_id]['classes']:
-            user_data[user_id]['classes'].remove(subject_name)
+            del user_data[user_id]['classes'][subject_name]
 
 
 def add_admin_subject(user_mention: str, subject_name: str) -> None:
@@ -345,6 +342,8 @@ def add_admin_subject(user_mention: str, subject_name: str) -> None:
     if user_id not in user_data:
         user_generate_default_data(user_id)
     if subject_name in subject_data:
+        if not is_subscribed(user_id, subject_name):
+            raise UserError(f'{user_mention} is not subscribed to {get_real_subject(subject_name)[1]}!')
         if is_admin(user_id, subject_name):
             raise UserError(f'{user_mention} is already an admin of {get_real_subject(subject_name)[1]}!')
         user_data[user_id]['classes'][subject_name]['permission_level'] = 1
@@ -370,12 +369,14 @@ def is_subscribed(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
         return False
-    return int(user_data[user_id]['classes'][subject_name]['permission_level']) >= 0
+    return subject_name in user_data[user_id]['classes']
 
 
 def is_admin(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
+        return False
+    if subject_name not in user_data[user_id]['classes']:
         return False
     return int(user_data[user_id]['classes'][subject_name]['permission_level']) >= 1
 
@@ -383,5 +384,7 @@ def is_admin(user_id: int, subject_name: str) -> bool:
 def is_owner(user_id: int, subject_name: str) -> bool:
     if user_id not in user_data:
         user_generate_default_data(user_id)
+        return False
+    if subject_name not in user_data[user_id]['classes']:
         return False
     return int(user_data[user_id]['classes'][subject_name]['permission_level']) == 2
