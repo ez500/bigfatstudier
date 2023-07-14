@@ -118,7 +118,8 @@ def get_subject_homework(subject_name: str) -> list[str]:
     if subject_name in subject_data:
         homework = []
         for h in subject_data[subject_name]['homework']:
-            homework.append(f'''{h['name']}, due {h['due_date']}''')
+            homework.append(f'''{subject_data[subject_name]['homework'][h]['name']}, '''
+                            f'''due {subject_data[subject_name]['homework'][h]['due_date']}''')
         return homework
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -128,7 +129,7 @@ def get_subject_homework_names(subject_name: str) -> list[str]:
     if subject_name in subject_data:
         homework = []
         for h in subject_data[subject_name]['homework']:
-            homework.append(h['name'])
+            homework.append(subject_data[subject_name]['homework'][h]['name'])
         return homework
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -138,7 +139,7 @@ def add_subject_homework(subject_name: str, homework: str, due_date: str) -> Non
     homework = ' '.join(homework.split())
     if subject_name in subject_data:
         for h in subject_data[subject_name]['homework']:
-            if homework.lower() == h['description']:
+            if homework.lower() == subject_data[subject_name]['homework'][h]['description']:
                 raise SubjectAttributeError(f'You can\'t duplicate homework assignments!')
         subject_data[subject_name]['homework'][homework] = Work(name=homework,
                                                                 description=homework.lower(),
@@ -147,14 +148,15 @@ def add_subject_homework(subject_name: str, homework: str, due_date: str) -> Non
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
-def remove_subject_homework(subject_name: str, homework: str) -> None:
+def remove_subject_homework(subject_name: str, homework: str) -> str:
     subject_name = ' '.join(subject_name.split()).lower()
     homework = ' '.join(homework.split())
     if subject_name in subject_data:
         for h in subject_data[subject_name]['homework']:
-            if homework.lower() == h['description']:
+            if homework.lower() == subject_data[subject_name]['homework'][h]['description']:
+                real_name = subject_data[subject_name]['homework'][h]['name']
                 del subject_data[subject_name]['homework'][h]
-                return
+                return real_name
         raise SubjectAttributeError(f'{homework} doesn\'t exist!')
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -162,9 +164,9 @@ def remove_subject_homework(subject_name: str, homework: str) -> None:
 def clear_subject_homework(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
-        for homework in subject_data[subject_name]['homework']:
-            del subject_data[subject_name]['homework'][homework]
+        subject_data[subject_name]['homework'].clear()
         return
+
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
@@ -173,7 +175,8 @@ def get_subject_projects(subject_name: str) -> list[str]:
     if subject_name in subject_data:
         projects = []
         for p in subject_data[subject_name]['project']:
-            projects.append(f'''{p['name']}, due {p['due_date']}''')
+            projects.append(f'''{subject_data[subject_name]['project'][p]['name']}, '''
+                            f'''due {subject_data[subject_name]['project'][p]['due_date']}''')
         return projects
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -183,7 +186,7 @@ def get_subject_project_names(subject_name: str) -> list[str]:
     if subject_name in subject_data:
         projects = []
         for p in subject_data[subject_name]['project']:
-            projects.append(p['name'])
+            projects.append(subject_data[subject_name]['project'][p]['name'])
         return projects
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -193,7 +196,7 @@ def add_subject_project(subject_name: str, project: str, due_date: str) -> None:
     project = ' '.join(project.split())
     if subject_name in subject_data:
         for p in subject_data[subject_name]['project']:
-            if project.lower() == p['description']:
+            if project.lower() == subject_data[subject_name]['project'][p]['description']:
                 raise SubjectAttributeError(f'You can\'t duplicate projects!')
         subject_data[subject_name]['project'][project] = Work(name=project,
                                                               description=project.lower(),
@@ -202,14 +205,15 @@ def add_subject_project(subject_name: str, project: str, due_date: str) -> None:
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
-def remove_subject_project(subject_name: str, project: str) -> None:
+def remove_subject_project(subject_name: str, project: str) -> str:
     subject_name = ' '.join(subject_name.split()).lower()
     project = ' '.join(project.split())
     if subject_name in subject_data:
         for p in subject_data[subject_name]['project']:
-            if project.lower() == p['description']:
+            if project.lower() == subject_data[subject_name]['project'][p]['description']:
+                real_name = subject_data[subject_name]['project'][p]['name']
                 del subject_data[subject_name]['project'][p]
-                return
+                return real_name
         raise SubjectAttributeError(f'{project} doesn\'t exist!')
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -217,8 +221,7 @@ def remove_subject_project(subject_name: str, project: str) -> None:
 def clear_subject_projects(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
-        for project in subject_data[subject_name]['project']:
-            del subject_data[subject_name]['project'][project]
+        subject_data[subject_name]['project'].clear()
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -228,7 +231,8 @@ def get_subject_tests(subject_name: str) -> list[str]:
     if subject_name in subject_data:
         tests = []
         for t in subject_data[subject_name]['test']:
-            tests.append(f'''{t['name']}, due {t['due_date']}''')
+            tests.append(f'''{subject_data[subject_name]['test'][t]['name']}, '''
+                         f'''due {subject_data[subject_name]['test'][t]['due_date']}''')
         return tests
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -238,7 +242,7 @@ def get_subject_test_names(subject_name: str) -> list[str]:
     if subject_name in subject_data:
         tests = []
         for t in subject_data[subject_name]['test']:
-            tests.append(t['name'])
+            tests.append(subject_data[subject_name]['test'][t]['name'])
         return tests
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -248,7 +252,7 @@ def add_subject_test(subject_name: str, test: str, due_date: str) -> None:
     test = ' '.join(test.split())
     if subject_name in subject_data:
         for t in subject_data[subject_name]['test']:
-            if test.lower() == t['description']:
+            if test.lower() == subject_data[subject_name]['test'][t]['description']:
                 raise SubjectAttributeError(f'You can\'t duplicate tests!')
         subject_data[subject_name]['test'][test] = Work(name=test,
                                                         description=test.lower(),
@@ -257,14 +261,15 @@ def add_subject_test(subject_name: str, test: str, due_date: str) -> None:
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
 
-def remove_subject_test(subject_name: str, test: str) -> None:
+def remove_subject_test(subject_name: str, test: str) -> str:
     subject_name = ' '.join(subject_name.split()).lower()
     test = ' '.join(test.split())
     if subject_name in subject_data:
         for t in subject_data[subject_name]['test']:
-            if test.lower() == t['description']:
+            if test.lower() == subject_data[subject_name]['test'][t]['description']:
+                real_name = subject_data[subject_name]['test'][t]['name']
                 del subject_data[subject_name]['test'][t]
-                return
+                return real_name
         raise SubjectAttributeError(f'{test} doesn\'t exist!')
     raise SubjectError(f'There is no such subject as {subject_name}!')
 
@@ -272,8 +277,7 @@ def remove_subject_test(subject_name: str, test: str) -> None:
 def clear_subject_tests(subject_name: str) -> None:
     subject_name = ' '.join(subject_name.split()).lower()
     if subject_name in subject_data:
-        for test in subject_data[subject_name]['test']:
-            del subject_data[subject_name]['test'][test]
+        subject_data[subject_name]['test'].clear()
         return
     raise SubjectError(f'There is no such subject as {subject_name}!')
 

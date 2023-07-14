@@ -2,6 +2,7 @@
 
 import asyncio
 import datetime
+import traceback
 
 import discord
 from discord.ext import commands
@@ -47,7 +48,7 @@ class Homework(commands.Cog, name='homework'):
                     return
                 message = '# Homework for all subjects:\n'
                 for name in subject_data:
-                    if repr(subject_data[name]['homework']) == '[]':
+                    if repr(subject_data[name]['homework']) == '{}':
                         message += f'**{get_real_subject(name)[1]}** has no homework.\n'
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_homework(name)) + '\n'
@@ -67,7 +68,7 @@ class Homework(commands.Cog, name='homework'):
                     return
                 message = '# Homework for your subscribed subjects:\n'
                 for name in get_user_subjects(ctx.author.id):
-                    if repr(subject_data[name]['homework']) == '[]':
+                    if repr(subject_data[name]['homework']) == '{}':
                         message += f'**{get_real_subject(name)[1]}** has no homework.\n'
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_homework(name)) + '\n'
@@ -132,6 +133,8 @@ class Homework(commands.Cog, name='homework'):
                 await ctx.send('Timeout! Confirmation failed')
             except SubjectError as e:
                 await ctx.send(str(e))
+            except Exception:
+                print(traceback.format_exc())
             return
         else:
             await ctx.send(f'Invalid clear argument ({_clear})')
@@ -140,6 +143,8 @@ class Homework(commands.Cog, name='homework'):
     @homework.autocomplete('subject_name')
     async def subject_name_with_all_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         options[0:0] = ['all', 'subscribed']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -186,19 +191,10 @@ class Homework(commands.Cog, name='homework'):
         try:
             date = datetime.datetime.strptime(due_date, '%m/%d/%Y')
             if date < datetime.datetime.now():
-                await ctx.send('This due date is before today. Add the assignment anyway?')
-                confirm = await self.client.wait_for('message',
-                                                     check=lambda m: m.channel == ctx.channel and
-                                                     m.author == ctx.author,
-                                                     timeout=20.0)
-                if confirm.content.lower() != 'yes':
-                    await ctx.send('Confirmation failed! Failed to add homework!')
-                    return
+                await ctx.send('You can\'t add homework with a due date before today!')
+                return
         except ValueError:
             await ctx.send('Not a valid date in the specified format!')
-            return
-        except asyncio.TimeoutError:
-            await ctx.send('Timeout! Failed to add homework!')
             return
         try:
             add_subject_homework(real_subject[0], assignment, due_date)
@@ -249,7 +245,7 @@ class Homework(commands.Cog, name='homework'):
             await ctx.send('Timeout! Failed to remove homework!')
             return
         try:
-            remove_subject_homework(real_subject[0], assignment)
+            assignment = remove_subject_homework(real_subject[0], assignment)
             await ctx.send(f'''Successfully removed homework '{assignment}' from {real_subject[1]}''')
         except SubjectError as e:
             await ctx.send(str(e))
@@ -298,7 +294,7 @@ class Homework(commands.Cog, name='homework'):
                     return
                 message = '# Projects for all subjects:\n'
                 for name in subject_data:
-                    if repr(subject_data[name]['project']) == '[]':
+                    if repr(subject_data[name]['project']) == '{}':
                         message += f'**{get_real_subject(name)[1]}** has no projects.\n'
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_projects(name)) + '\n'
@@ -318,7 +314,7 @@ class Homework(commands.Cog, name='homework'):
                     return
                 message = '# Projects for your subscribed subjects:\n'
                 for name in get_user_subjects(ctx.author.id):
-                    if repr(subject_data[name]['project']) == '[]':
+                    if repr(subject_data[name]['project']) == '{}':
                         message += f'**{get_real_subject(name)[1]}** has no projects.\n'
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_projects(name)) + '\n'
@@ -391,6 +387,8 @@ class Homework(commands.Cog, name='homework'):
     @project.autocomplete('subject_name')
     async def subject_name_with_all_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         options[0:0] = ['all', 'subscribed']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -437,19 +435,10 @@ class Homework(commands.Cog, name='homework'):
         try:
             date = datetime.datetime.strptime(due_date, '%m/%d/%Y')
             if date < datetime.datetime.now():
-                await ctx.send('This due date is before today. Add the project anyway?')
-                confirm = await self.client.wait_for('message',
-                                                     check=lambda m: m.channel == ctx.channel and
-                                                     m.author == ctx.author,
-                                                     timeout=20.0)
-                if confirm.content.lower() != 'yes':
-                    await ctx.send('Confirmation failed! Failed to add project!')
-                    return
+                await ctx.send('You can\'t add projects with a due date before today!')
+                return
         except ValueError:
             await ctx.send('Not a valid date in the specified format!')
-            return
-        except asyncio.TimeoutError:
-            await ctx.send('Timeout! Failed to add project!')
             return
         try:
             add_subject_project(real_subject[0], project, due_date)
@@ -500,7 +489,7 @@ class Homework(commands.Cog, name='homework'):
             await ctx.send('Timeout! Failed to remove project!')
             return
         try:
-            remove_subject_project(real_subject[0], project)
+            project = remove_subject_project(real_subject[0], project)
             await ctx.send(f'''Successfully removed project '{project}' from {real_subject[1]}''')
         except SubjectError as e:
             await ctx.send(str(e))
@@ -549,7 +538,7 @@ class Homework(commands.Cog, name='homework'):
                     return
                 message = '# Tests for all subjects:\n'
                 for name in subject_data:
-                    if repr(subject_data[name]['test']) == '[]':
+                    if repr(subject_data[name]['test']) == '{}':
                         message += f'**{get_real_subject(name)[1]}** has no upcoming tests.\n'
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_tests(name)) + '\n'
@@ -569,7 +558,7 @@ class Homework(commands.Cog, name='homework'):
                     return
                 message = '# Tests for your subscribed subjects:\n'
                 for name in get_user_subjects(ctx.author.id):
-                    if repr(subject_data[name]['test']) == '[]':
+                    if repr(subject_data[name]['test']) == '{}':
                         message += f'**{get_real_subject(name)[1]}** has no upcoming tests.\n'
                         continue
                     message += f'''**{get_real_subject(name)[1]}**:\n''' + '\n'.join(get_subject_tests(name)) + '\n'
@@ -642,6 +631,8 @@ class Homework(commands.Cog, name='homework'):
     @test.autocomplete('subject_name')
     async def subject_name_with_all_autocomplete(self, _interaction, current):
         options = [get_real_subject(subject_name)[1] for subject_name in subject_data]
+        for subject in subject_data:
+            options.extend(alias for alias in get_subject_alias(subject))
         options[0:0] = ['all', 'subscribed']
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
@@ -688,19 +679,10 @@ class Homework(commands.Cog, name='homework'):
         try:
             date = datetime.datetime.strptime(due_date, '%m/%d/%Y')
             if date < datetime.datetime.now():
-                await ctx.send('This test date is before today. Add test anyway?')
-                confirm = await self.client.wait_for('message',
-                                                     check=lambda m: m.channel == ctx.channel and
-                                                     m.author == ctx.author,
-                                                     timeout=20.0)
-                if confirm.content.lower() != 'yes':
-                    await ctx.send('Confirmation failed! Failed to add test!')
-                    return
+                await ctx.send('You can\'t add tests that happened already!')
+                return
         except ValueError:
             await ctx.send('Not a valid date in the specified format!')
-            return
-        except asyncio.TimeoutError:
-            await ctx.send('Timeout! Failed to add test!')
             return
         try:
             add_subject_test(real_subject[0], test, due_date)
@@ -751,7 +733,7 @@ class Homework(commands.Cog, name='homework'):
             await ctx.send('Timeout! Failed to remove test!')
             return
         try:
-            remove_subject_test(real_subject[0], test)
+            test = remove_subject_test(real_subject[0], test)
             await ctx.send(f'''Successfully removed test '{test}' from {real_subject[1]}''')
         except SubjectError as e:
             await ctx.send(str(e))

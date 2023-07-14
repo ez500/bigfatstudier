@@ -1,7 +1,6 @@
 """Subject commands"""
 
 import asyncio
-import traceback
 
 import discord
 from discord.ext import commands
