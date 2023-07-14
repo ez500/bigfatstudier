@@ -111,7 +111,7 @@ class Homework(commands.Cog, name='homework'):
                     await ctx.send(f'Homework for **{real_subject[1]}**:\n' +
                                    '\n'.join(get_subject_homework(real_subject[0])))
                 except SubjectError as e:
-                    await ctx.send(e)
+                    await ctx.send(str(e))
         if _clear.lower() == 'clear':
             try:
                 real_subject = get_real_subject(subject_name)
@@ -131,7 +131,7 @@ class Homework(commands.Cog, name='homework'):
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Confirmation failed')
             except SubjectError as e:
-                await ctx.send(e)
+                await ctx.send(str(e))
             return
         else:
             await ctx.send(f'Invalid clear argument ({_clear})')
@@ -205,9 +205,9 @@ class Homework(commands.Cog, name='homework'):
             await ctx.send(f'Successfully added {assignment} to {real_subject[1]} '
                            f'due {due_date}')
         except SubjectError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
         except SubjectAttributeError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
 
     @add_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -252,9 +252,9 @@ class Homework(commands.Cog, name='homework'):
             remove_subject_homework(real_subject[0], assignment)
             await ctx.send(f'''Successfully removed homework '{assignment}' from {real_subject[1]}''')
         except SubjectError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
         except SubjectAttributeError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
 
     @remove_homework.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -362,7 +362,7 @@ class Homework(commands.Cog, name='homework'):
                     await ctx.send(f'Projects for **{real_subject[1]}**:\n' +
                                    '\n'.join(get_subject_projects(real_subject[0])))
                 except SubjectError as e:
-                    await ctx.send(e)
+                    await ctx.send(str(e))
         if _clear.lower() == 'clear':
             try:
                 real_subject = get_real_subject(subject_name)
@@ -382,7 +382,7 @@ class Homework(commands.Cog, name='homework'):
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Confirmation failed')
             except SubjectError as e:
-                await ctx.send(e)
+                await ctx.send(str(e))
             return
         else:
             await ctx.send(f'Invalid clear argument ({_clear})')
@@ -456,9 +456,9 @@ class Homework(commands.Cog, name='homework'):
             await ctx.send(f'Successfully added {project} to {real_subject[1]} '
                            f'due {due_date}')
         except SubjectError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
         except SubjectAttributeError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
 
     @add_project.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -503,9 +503,9 @@ class Homework(commands.Cog, name='homework'):
             remove_subject_project(real_subject[0], project)
             await ctx.send(f'''Successfully removed project '{project}' from {real_subject[1]}''')
         except SubjectError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
         except SubjectAttributeError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
 
     @remove_project.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -613,7 +613,7 @@ class Homework(commands.Cog, name='homework'):
                     await ctx.send(f'Tests for **{real_subject[1]}**:\n' +
                                    '\n'.join(get_subject_tests(real_subject[0])))
                 except SubjectError as e:
-                    await ctx.send(e)
+                    await ctx.send(str(e))
         if _clear.lower() == 'clear':
             try:
                 real_subject = get_real_subject(subject_name)
@@ -633,7 +633,7 @@ class Homework(commands.Cog, name='homework'):
             except asyncio.TimeoutError:
                 await ctx.send('Timeout! Confirmation failed')
             except SubjectError as e:
-                await ctx.send(e)
+                await ctx.send(str(e))
             return
         else:
             await ctx.send(f'Invalid clear argument ({_clear})')
@@ -707,9 +707,9 @@ class Homework(commands.Cog, name='homework'):
             await ctx.send(f'Successfully added {test} to {real_subject[1]} '
                            f'due {due_date}')
         except SubjectError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
         except SubjectAttributeError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
 
     @add_test.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):
@@ -754,9 +754,9 @@ class Homework(commands.Cog, name='homework'):
             remove_subject_test(real_subject[0], test)
             await ctx.send(f'''Successfully removed test '{test}' from {real_subject[1]}''')
         except SubjectError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
         except SubjectAttributeError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
 
     @remove_test.autocomplete('subject_name')
     async def subject_name_autocomplete(self, _interaction, current):

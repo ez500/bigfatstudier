@@ -109,7 +109,7 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
         try:
             generate_message_listener(msg_listener.id, emoji_listener, role_listener)
         except MessageAttributeError as e:
-            await ctx.send(e)
+            await ctx.send(str(e))
 
 
 async def setup(client):
