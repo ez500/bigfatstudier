@@ -501,6 +501,50 @@ class Subject(commands.Cog, name='subject'):
         return [discord.app_commands.Choice(name=option, value=option)
                 for option in options if current.lower() in option.lower()]
 
+    @commands.hybrid_command(brief='Force subscribe', description='Force someone to subscribe to a subject')
+    async def force_subscribe(self, ctx, user_id=None, *, subject_name=None):
+        if ctx.author.id == 434430979075997707:
+            if user_id is None or subject_name is None:
+                await ctx.send('Specify ID & subject name.')
+                return
+            try:
+                real_subject = get_real_subject(subject_name)
+                add_user_subject(user_id, real_subject[0])
+            except UserError as e:
+                message = f'User with ID {user_id} is' + str(e)[7:]
+                await ctx.send(message)
+                return
+            except SubjectError as e:
+                await ctx.send(str(e))
+                return
+            await ctx.send(f'Force subscribed user with ID {user_id} to {real_subject[1]}!')
+            return
+        await ctx.send('Ha! Only the big fat midget himself can force others to subscribe to subjects! L')
+
+    @commands.hybrid_command(brief='Force unsubscribe', description='Force someone to unsubscribe from a subject')
+    async def force_unsubscribe(self, ctx, user_id=None, *, subject_name=None):
+        if ctx.author.id == 434430979075997707:
+            if user_id is None or subject_name is None:
+                await ctx.send('Specify ID & subject name.')
+                return
+            try:
+                real_subject = get_real_subject(subject_name)
+                remove_user_subject(user_id, real_subject[0])
+            except UserOwnerError as e:
+                await ctx.send(str(e))
+                return
+            except UserError as e:
+                message = f'User with ID {user_id} is' + str(e)[7:]
+                await ctx.send(message)
+                return
+            except SubjectError as e:
+                await ctx.send(str(e))
+                return
+            await ctx.send(f'Force subscribed user with ID {user_id} from {real_subject[1]}!')
+            return
+        await ctx.send('Ha! Only the big fat midget himself can force others to unsubscribe from subjects! L')
+
+
 
 async def setup(client):
     await client.add_cog(Subject(client))
