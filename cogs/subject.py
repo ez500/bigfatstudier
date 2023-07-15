@@ -35,7 +35,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What is the name of the subject you want to add?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -57,7 +57,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What is the name of the subject you want to remove?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -110,7 +110,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to view aliases?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -122,7 +122,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to add alias to?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -136,7 +136,7 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'What is the alias to add to {real_subject[1]}?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
-                                                                 m.author == ctx.author,
+                                                 m.author == ctx.author,
                                                  timeout=20.0)
                 subject_alias = msg.content
             except SubjectError as e:
@@ -157,7 +157,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to remove alias from?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -171,7 +171,7 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'What is the alias to remove from {real_subject[1]}?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
-                                                                 m.author == ctx.author,
+                                                 m.author == ctx.author,
                                                  timeout=20.0)
                 subject_alias = msg.content
             except SubjectError as e:
@@ -219,7 +219,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to view description?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -231,7 +231,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to set description?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -245,7 +245,7 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send(f'What is the description for {real_subject[1]}?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
-                                                                 m.author == ctx.author,
+                                                 m.author == ctx.author,
                                                  timeout=20.0)
                 subject_description = msg.content
             except SubjectError as e:
@@ -266,7 +266,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to clear description?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -317,7 +317,7 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send('What subject to subscribe to?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
-                                                                 m.author == ctx.author,
+                                                 m.author == ctx.author,
                                                  timeout=20.0)
                 subject_name = msg.content
             except asyncio.TimeoutError:
@@ -351,7 +351,7 @@ class Subject(commands.Cog, name='subject'):
                 await ctx.send('What subject to unsubscribe from?')
                 msg = await self.client.wait_for('message',
                                                  check=lambda m: m.channel == ctx.channel and
-                                                                 m.author == ctx.author,
+                                                 m.author == ctx.author,
                                                  timeout=20.0)
                 subject_name = msg.content
             except asyncio.TimeoutError:
@@ -391,7 +391,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to check admins?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -403,7 +403,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to add admin?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:
@@ -442,7 +442,7 @@ class Subject(commands.Cog, name='subject'):
                     await ctx.send('What subject to remove admin?')
                     msg = await self.client.wait_for('message',
                                                      check=lambda m: m.channel == ctx.channel and
-                                                                     m.author == ctx.author,
+                                                     m.author == ctx.author,
                                                      timeout=20.0)
                     subject_name = msg.content
                 except asyncio.TimeoutError:

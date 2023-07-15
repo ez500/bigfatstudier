@@ -51,7 +51,7 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
             role_id = message_listener[msg_id]['role'][message_listener[msg_id]['emoji'].index(emoji_name)]
             role_name = guild.get_role(role_id).name
             await member.remove_roles(guild.get_role(role_id))
-        if role_name is None:
+        if msg_id in message_listener and role_name is None:
             await channel.send(f'This reaction message does not work anymore. Delete the'
                                f' reaction message and rerun the reaction_message command.')
             return
