@@ -1,6 +1,7 @@
 """Role giving listener based on messages"""
 
 import asyncio
+import traceback
 
 import discord
 from discord.ext import commands
@@ -33,8 +34,11 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
         if msg_id in message_listener and emoji_name in message_listener[msg_id]['emoji']:
             role_id = message_listener[msg_id]['role'][message_listener[msg_id]['emoji'].index(emoji_name)]
             role_name = guild.get_role(role_id).name
-            await member.add_roles(guild.get_role(role_id))
-        if role_name is None:
+            try:
+                await member.add_roles(guild.get_role(role_id))
+            except discord.errors.Forbidden:
+                await channel.send(f'I do not have permission to give the \'{role_name}\' role to {member.display_name}.')
+        if msg_id in message_listener and role_name is None:
             await channel.send(f'This reaction message does not work anymore. Delete the'
                                f' reaction message and rerun the reaction_message command.')
             return
@@ -89,6 +93,7 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
                                                   check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
                                                   timeout=20.0)
                 role = role.content
+                print(role)
                 if role not in [guild_role.name for guild_role in await ctx.guild.fetch_roles()]:
                     await ctx.send(f'{role} is not a valid role name to assign {emoji} to!')
                     return
