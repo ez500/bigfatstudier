@@ -2,6 +2,7 @@
 
 import asyncio
 import traceback
+from emoji import EMOJI_DATA
 
 import discord
 from discord.ext import commands
@@ -66,6 +67,11 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
 
     @commands.hybrid_command()
     async def reaction_message(self, ctx, *, emojis=None):
+        emoji_listener = []
+        role_listener = []
+        if ctx.author.id != 434430979075997707:
+            await ctx.send("You are not authorized to use this command!")
+            return
         if emojis is None:
             try:
                 await ctx.send('What emojis will be listened to?')
@@ -76,21 +82,20 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
             except asyncio.TimeoutError:
                 await ctx.send('Failed to add message to listen to!')
         emojis = emojis.split()
-        emoji_listener = []
-        role_listener = []
+        for emoji in emojis:
+            if emoji not in EMOJI_DATA and (emoji[2:emoji.find(':', 2, -1)] not in
+                                            [guild_emoji.name for guild_emoji in
+                                             await ctx.guild.fetch_emojis()]):
+                await ctx.send('Invalid emoji! Please enter emoji icons, not the names.' if len(emojis) == 1 else
+                               'Invalid emojis! Please enter emoji icons, not the names.')
+                return
+            emoji_listener.append(emoji)
         try:
             await ctx.send('What is the message to be listened to for reactions?')
             msg = await self.client.wait_for('message',
                                              check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
                                              timeout=40.0)
-            for emoji in emojis:
-                if len(emoji) > 1:
-                    emoji = emoji[2:emoji.index(':', 2, -1)]
-                    if emoji not in [guild_emoji.name for guild_emoji in await ctx.guild.fetch_emojis()]:
-                        await ctx.send(f'{emoji} is not a valid emoji name! Sorry, emojis from other servers'
-                                       f' are not supported.')
-                        return
-                emoji_listener.append(emoji)
+            msg = msg.content
             for emoji in emojis:
                 await ctx.send(f'What is the name of the role associated with {emoji}?')
                 role = await self.client.wait_for('message',
@@ -108,7 +113,7 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
             return
         msg_listener = await ctx.message.channel.send(msg.content)
         for emoji in emoji_listener:
-            if len(emoji) > 1:
+            if emoji not in EMOJI_DATA:
                 for e in await msg_listener.guild.fetch_emojis():
                     if emoji == e.name:
                         await msg_listener.add_reaction(e)
