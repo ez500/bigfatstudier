@@ -28,13 +28,12 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
         member = await guild.fetch_member(payload.user_id)
         msg_id = payload.message_id
         emoji_name = payload.emoji.name
-        role_name = None
         if payload.user_id == 970868539022008330:
             return
         if msg_id not in message_listener:
             return
-        print(f'reaction add detected {guild} {channel} {member} {msg_id} {emoji_name}')
-        if msg_id in message_listener and emoji_name in message_listener[msg_id]['emoji']:
+        elif msg_id in message_listener and emoji_name in message_listener[msg_id]['emoji']:
+            print(f'reaction add detected {guild} {channel} {member} {msg_id} {emoji_name}')
             role_id = message_listener[msg_id]['role'][message_listener[msg_id]['emoji'].index(emoji_name)]
             role_name = guild.get_role(role_id).name
             try:
@@ -42,9 +41,9 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
             except discord.Forbidden:
                 await channel.send(
                     f'I do not have permission to give the \'{role_name}\' role to {member.display_name}.')
-        if msg_id in message_listener and role_name is None:
-            await channel.send(f'This reaction message does not work anymore. Delete the'
-                               f' reaction message and rerun the reaction_message command.')
+        else:
+            msg = await channel.fetch_message(msg_id)
+            await msg.remove_reaction(payload.emoji, member)
             return
 
     @commands.Cog.listener('on_raw_reaction_remove')
