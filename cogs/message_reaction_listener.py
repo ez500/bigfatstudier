@@ -15,9 +15,10 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
         self.client = client
 
     @commands.Cog.listener()
-    async def on_message_delete(self, message: discord.Message):
-        if message.id in message_listener:
-            remove_message_listener(message.id)
+    async def on_raw_message_delete(self, payload):
+        print(f'listened message delete detected {payload.message_id}')
+        if payload.message_id in message_listener:
+            remove_message_listener(payload.message_id)
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def message_reaction_add_listener(self, payload):
