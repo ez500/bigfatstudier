@@ -111,7 +111,31 @@ class MessageReactionListener(commands.Cog, name='message_reaction_listener'):
         except asyncio.TimeoutError:
             await ctx.send('Failed to add message to listen to!')
             return
-        msg_listener = await ctx.message.channel.send(msg.content)
+        try:
+            await ctx.send('Mention everyone? (y/N)')
+            everyone = await self.client.wait_for('message',
+                                                  check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
+                                                  timeout=3.0)
+            everyone = everyone.content
+        except asyncio.TimeoutError:
+            everyone = 'n'
+        if everyone.lower() == 'y':
+            msg = '@everyone ' + msg
+        try:
+            await ctx.send('Which channel to send?')
+            channel_id = await self.client.wait_for('message',
+                                                 check=lambda m: m.channel == ctx.channel and m.author == ctx.author,
+                                                 timeout=40.0)
+            channel_id = channel_id.content[2:-1] if (channel_id.content.startswith('<#') and
+                                                      channel_id.content.endswith('>')) else channel_id.content
+            try:
+                channel = await ctx.guild.fetch_channel(channel_id)
+            except discord.NotFound:
+                await ctx.send('Channel not found!')
+                return
+        except asyncio.TimeoutError:
+            channel = ctx.channel.id
+        msg_listener = await channel.send(msg)
         for emoji in emoji_listener:
             if emoji not in EMOJI_DATA:
                 for e in await msg_listener.guild.fetch_emojis():
